@@ -1,0 +1,86 @@
+/* ======================================================================
+   Hero and footer at dusk: a dithered sky behind the copy, with the demo
+   rising into it, and the wordmark against the last light.
+   ====================================================================== */
+
+/* ---- Headline ---- */
+.hero-title {
+  font-size: clamp(38px, 5vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.028em;
+}
+/* The sub-headline supports the headline rather than competing with it: smaller than the page's
+   other leads, a little more leading, and a measure wide enough to keep it to two lines. */
+.hero-sub {
+  font-size: clamp(15px, 1.1vw, 16px);
+  line-height: 1.6;
+  max-width: 48em;
+}
+.hero-em {
+  font-style: italic;
+  background-image: linear-gradient(90deg, #f7a272 0%, #f0607a 48%, #b26cf2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* The italic's last stroke leans past the box; keep it inside the clipped background. */
+  padding-right: 0.08em;
+  margin-right: -0.08em;
+}
+
+/* ---- The sky ----
+   The whole hero: dark behind the headline, brightening toward the horizon where the demo rises.
+   A soft shade keeps the copy on a calm, dark patch. */
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Stacked: only behind the copy, so the cards' notes sit on the plain canvas. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 22%, transparent 34%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 22%, transparent 34%);
+}
+@media (min-width: 1024px) {
+  .hero-sky {
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 82%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 82%);
+  }
+}
+.hero-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 50% 32% at 50% 27%, rgba(18, 18, 18, 0.78), transparent 100%);
+}
+.hero-sky canvas { image-rendering: pixelated; }
+.pixel-stars { position: absolute; inset: 0 0 45% 0; }
+.pixel-stars > span { position: absolute; animation: star-blink 4s steps(2, jump-none) infinite; }
+@keyframes star-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.25; } }
+
+/* ---- Footer horizon ----
+   The page ends at sunset: the last light rises from the bottom edge, and the wordmark stands
+   in front of it, its dark lower half a silhouette against the glow. */
+.footer-horizon {
+  --mark: min(1240px, 94vw);
+  position: relative;
+  overflow: hidden;
+  padding-top: clamp(32px, 5vw, 72px);
+}
+.footer-sky {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 55%), linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 55%), linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  mask-composite: intersect;
+}
+.footer-sky canvas { image-rendering: pixelated; }
+.footer-wordmark {
+  position: relative;
+  display: block;
+  width: var(--mark);
+  max-width: none;
+  margin-inline: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-stars > span { animation: none; }
+}

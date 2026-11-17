@@ -1,0 +1,142 @@
+---
+title: Automations
+description: Routines that start a thread on a schedule or a GitHub event, with their own tools, caps and copy.
+---
+
+An automation is a prompt with a trigger. It starts a thread on its own, in one project, on one model, and the thread lands in the sidebar and the inbox like any other. The difference is that nobody typed the first message.
+
+Automations are for work that should happen without you: a nightly test run, a dependency bump, a triage of a failing check, a plan for a labelled issue.
+
+## The default
+
+A new automation starts with:
+
+- **Plan** mode, so it reads and writes a plan but changes no files.
+- **Work in a copy** on, which matters once the mode can write.
+- **On**, but with no trigger. It runs only when you press **Run now** until you add a schedule or a GitHub event.
+- No tools allowed without asking. Every call that would ask on the desktop asks here too, and the run waits in the inbox for you.
+- No cap on runs or spend.
+
+The editor asks for four things: what to do, where, on which model, and when. The rest has defaults you can change.
+
+## What it does
+
+The prompt is the first message of every run. What started the run is added below it: the event, the pull request, the issue, or the schedule's time.
+
+The mode is the same set of modes a thread has: Ask, Plan, Review, Build or Debug. Plan is the default because most routines should report before they change anything. A write mode can edit files and run commands. The run's proof works as it does in a normal thread.
+
+The model is an API model. Claude Code, Codex and ACP agents cannot run an automation, because the grant, the caps and the allowed tools are enforced around a model Quaka calls directly.
+
+The project is one folder. The run starts there, and the thread keeps that binding.
+
+## When it runs
+
+An automation can have up to 20 triggers, and any one of them starts it. There is at most one schedule.
+
+### A schedule
+
+A schedule is a five-field cron line in an IANA timezone, such as `0 3 * * *` in `Europe/Berlin`. The editor offers daily, weekdays, weekly, hourly and a custom line. Two rules apply:
+
+- **No more than once every five minutes.** A pattern that fires more often is refused when you save it.
+- **Missed fires follow one choice.** If the machine slept or Quaka was closed, a missed schedule either runs once for all the occurrences it missed, or skips them and waits for the next one. The editor calls this **Skip missed**.
+
+Quaka must be running for a schedule to fire. It can be in the tray with no window open: turn on **Start Quaka at login** in the Automations view, and the schedule can fire while the app is hidden. A machine that is asleep or off does not fire anything.
+
+### GitHub events
+
+A GitHub trigger names one repository as `owner/name` and one or more events:
+
+| Event | What starts the run |
+| --- | --- |
+| PR opened | A pull request is opened. |
+| PR updated | New commits are pushed to a pull request. |
+| PR merged | A pull request is merged. |
+| CI failed | A GitHub Actions run fails. |
+| Issue labelled | An issue gets a label. |
+| Comment | A comment is posted. |
+
+GitHub triggers ride on the same polling as pull request watching. They need GitHub signed in, **Watch pull requests** on in Settings, and air-gapped mode off. Without those, the automation's row says why it cannot fire.
+
+Filters narrow an event. Every filter you set must match:
+
+| Filter | What it matches |
+| --- | --- |
+| Branch | A glob on the base or head branch, or the branch CI ran on. |
+| Author | Logins, comma separated. `@me` is your signed-in GitHub user. |
+| Label | A label on the issue or pull request. |
+| Text | Case-insensitive text in the title or body. |
+| Regex | A regular expression on the same text. |
+| Outsiders | Also fire for people without write access, bots and forks. Their text reaches the model only as fenced data. |
+
+Schedules ignore filters. A GitHub event that matches several automations can start each of them. One batch of events starts at most ten runs of one automation.
+
+### Only if
+
+The optional **Only if** line is a condition in plain words, such as "the issue describes a bug, not a feature request". A small model checks it against what happened. If the model is not sure, the run starts and asks you first instead of guessing.
+
+## What it may do without asking
+
+The grant is the list of tools the run may use without a card:
+
+- **Shell commands.** Never a destructive command and never a force-push, even when `bash` is allowed.
+- **Edit files.**
+- **Write files.**
+- **Push and open a pull request.**
+
+You can add other tool names, such as an MCP tool, by name. Anything not on the list still asks, and the run waits in the inbox. A destructive command always asks. A prompt in an automation waits up to 24 hours for you, so a 3 a.m. run can wait until morning instead of being denied after five minutes.
+
+The grant belongs to that run. A message you type into the thread afterwards is an ordinary run with the ordinary approvals.
+
+## Work in a copy
+
+New automations work in a copy when their mode can write. The run edits and tests in a copy of the project. Pushes, pull requests and MCP calls wait until you review the result and apply it once, or discard it. The apply card separates the files from the held actions, so you can take the change and refuse the push.
+
+A read-only mode has nothing to hold, so the copy makes no difference there. Turning the switch off makes a write run work in place and ask before each change.
+
+## Caps
+
+Two optional caps apply to one automation:
+
+- **Runs a day.** The count resets at midnight in the schedule's timezone, or the machine's timezone when there is no schedule.
+- **Spend a day.** The same day boundary, in US dollars.
+
+A cap stops a fire before it starts, and the run history says why. The spend cap is also checked before each model call, so a run that crosses it stops there. The global daily cap in Settings applies on top of both.
+
+One run of an automation at a time. A second fire is skipped while the previous run is still going.
+
+## Run now, history and templates
+
+**Run now** starts a run whether or not a trigger exists. The run history lists each fire with its outcome: done, running, dispatched, skipped, stopped or an error, with the thread it started.
+
+The empty view offers four templates:
+
+- **Nightly tests on main**, a Review run at 03:00 that tests a detached worktree and triages failures.
+- **Weekly dependency bump**, a Build run on Monday at 09:00 that updates patch and minor versions, tests, and asks before opening a pull request.
+- **Fix red CI on my PRs**, a Plan run when a check fails on one of your pushes.
+- **Plan issues labelled quaka**, a Plan run when an issue gets that label.
+
+A template is a starting point. Read its prompt before you save it.
+
+## Where it runs
+
+Automations are stored on the device that created them and never sync to another device. Only that device fires them. The run needs Quaka running and a working provider; if the app cannot start the thread within 30 minutes, the fire is abandoned.
+
+From a chat bridge, `!run <name>` starts an automation by name. The thread opens in the Quaka inbox.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Watch pull requests | On | GitHub triggers need it, plus a GitHub sign-in. |
+| Daily spend cap | Off | A global cap on top of each automation's own. |
+| Start Quaka at login | Off | Lets a schedule fire with no window open, in the tray. |
+
+## Limits
+
+- **A schedule is not a server.** It fires only while Quaka runs. A sleeping or powered-off machine misses it, and the skip setting decides what happens next.
+- **A cron line is local time, not your intent.** A timezone or daylight-saving change can move a run by an hour. The editor shows the next fires so you can check.
+- **GitHub triggers depend on polling.** They need a sign-in, pull request watching and a network. Air-gapped mode turns them off. A private repository outside your access does not produce events.
+- **The grant is narrow on purpose.** A run that needs a tool you did not allow waits for you. That is the design, and it means an unattended run can sit in the inbox for hours.
+- **A cap is a stop, not a budget forecast.** A run can cross the spend cap between model calls. The global cap and the provider's own limits are separate.
+- **A copy protects the checkout, not the repository.** Applying a run writes its files. A push you approve is a real push.
+- **An automation is a prompt, not a test.** A green run means the model finished and its proof passed. It does not mean the change is the one you wanted.

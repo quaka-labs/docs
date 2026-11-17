@@ -1,0 +1,127 @@
+---
+title: Models
+description: The providers Quaka can run, how a thread picks a model, and what each model setting changes.
+---
+
+A thread runs on one model at a time. The model is chosen in the message box and can be changed between messages. Quaka sends the thread, the files the agent reads and the tool results to that model's provider. Nothing else leaves the machine unless you attach it or approve a call that does.
+
+## The default
+
+A new install has no model until onboarding. If Claude Code or Codex is already installed, onboarding offers it first because it uses your existing login. Otherwise you pick Anthropic, OpenAI or Gemini and paste a key.
+
+After onboarding:
+
+- New threads start on the provider you picked.
+- The model menu shows the models that provider lists, newest first.
+- Reasoning effort is the model's own default.
+- A thread may use each model's whole context window, about 1M tokens where the model has it.
+- Side jobs use the thread's model until you pick a small model.
+
+## Providers
+
+| Provider | What it is | What it needs |
+| --- | --- | --- |
+| Anthropic | Claude models over the Anthropic API. | An Anthropic API key. |
+| OpenAI | GPT models over the OpenAI API. | An OpenAI API key. |
+| Gemini | Gemini models over the Google API. | A Gemini API key. |
+| Claude Code | The Claude Code you already installed. It runs its own loop and uses your Claude subscription login. | Claude Code installed and signed in. |
+| Codex | The Codex you already installed. It runs its own loop and uses your OpenAI login. | Codex installed and signed in. |
+| Ollama | A local model server on this machine. | Ollama running at `http://localhost:11434`. |
+| MLX | A local model server on this machine, for Apple silicon. | An MLX server running at `http://localhost:8080`. |
+| OpenAI-compatible | Any endpoint that speaks the OpenAI API: a gateway, a hosted open model, or your own server. | A base URL, a model list and, usually, a key. |
+| ACP agent | An Agent Client Protocol agent that Quaka spawns and drives as the brain. | A launch command. |
+
+Anthropic, OpenAI and Gemini are the featured choices in onboarding. The rest are under **Other** or **Already have an agent**. You can add all of them later in Settings.
+
+## Keys and secrets
+
+Provider keys live in the operating system's keychain. The app stores a flag that says a key exists, never the key itself. The settings window shows whether a key is saved and lets you replace or remove it.
+
+**Project secrets** are different. They belong to one project and are stored in the keychain too. Agent shell commands and the terminal receive them as environment variables. The agent is told their names, never their values, and a command that names one always asks for approval. If a secret appears in tool output, Quaka replaces it with `[secret:NAME]` before the model, the run journal, the chat or a bridge sees it.
+
+That masking protects against accidents, not against a determined command. A program that transforms the value before printing it can get it through, and any program the agent runs can use the secret. Treat a project secret as available to the agent, not hidden from it.
+
+## Claude Code and Codex
+
+Claude Code and Codex are different from the API providers. They are agents with their own loop, tools and context management. Quaka starts the process, gives it the workspace and reads its output.
+
+By default, Quaka runs the CLI's own process inside the sandbox and under the firewall. It also routes the tool calls the CLI would ask about through Quaka's approval card. The setting is **Sandbox Claude Code** or **Sandbox Codex**. Off, the CLI runs as it would on its own, outside the sandbox.
+
+If you have more than one subscription account for a CLI, Quaka can switch to the next one when the current account runs out mid-work. The setting is **Switch accounts when one runs out**. The order is the order in Settings.
+
+A CLI provider does not use the model menu's API models. It reports the model it is actually running. Replay cannot use it, because Replay needs a model it can call directly.
+
+## Local models
+
+Ollama and MLX run on your machine. They need no key and no network. The default addresses are `http://localhost:11434` for Ollama and `http://localhost:8080` for MLX. You can point them at another address if your server listens elsewhere.
+
+Local models are the only models that run in air-gapped mode. They are also the only models whose usage costs nothing. Their quality and speed depend on the model and the machine.
+
+## Custom providers and ACP agents
+
+A custom provider is any OpenAI-compatible endpoint. Give it a name, a base URL, a comma-separated model list and, if it needs one, a key. **Fetch models** asks the endpoint for its list when a key is saved.
+
+An ACP agent is a process that speaks the Agent Client Protocol. Quaka ships presets for Gemini CLI, a Claude Code adapter, a Codex adapter and a remote Quaka over Tailscale SSH. You can also write your own command, arguments and environment.
+
+An ACP agent runs its own loop, like Claude Code and Codex. By default, a run the sandbox cannot hold is refused. The agent's own **unsandboxed** option lets it run outside the sandbox; only use it for an agent you trust with the machine.
+
+## Choosing a model in a thread
+
+The model menu in the message box lists providers and their models. It has three parts:
+
+- **Provider:** where the model comes from.
+- **Model:** the model for this thread. Models are grouped by family and the newest is first. A `1M` or `872K` badge means the model reads that much context.
+- **Effort:** how much the model should think per turn.
+
+Changing the model applies to the next message. It does not rewrite the thread's history. A thread can move from a large model to a small one and back.
+
+## Reasoning effort
+
+| Level | What it changes |
+| --- | --- |
+| Default | The model's own level. |
+| Low | Fewer, more consolidated tool calls, and terse replies. |
+| Medium | Balanced. |
+| High | Thorough. |
+| Extra high | The coding default on current models. |
+| Max | Correctness over cost. |
+
+Effort is clamped to what each model accepts. Claude and OpenAI reasoning models honor it; other models ignore it. The same setting is in Settings, **Models & spend**, under **Threads**.
+
+## Context
+
+**Use each model's whole context window** is on by default. A model that reads about 1M tokens gets up to that; Codex gets up to 872K. Off, Quaka sends at most 200K tokens per request.
+
+A long thread costs more per message when the window is large. On an API key, OpenAI bills input above 272K tokens at twice the rate. On a plan, a long thread uses your limits faster. Either way, messages that were summarized to save space stay in the thread and the agent can look up their exact text.
+
+## Helper models
+
+Two side jobs can run on a different model than the thread.
+
+**Small model for side jobs.** Summarizes long threads, runs explore subtasks at low effort, reviews tool calls against your policy, and checks review findings and automation conditions. Unset uses the thread's model. You can pick a cheap cloud model or a model on this machine. Usage is counted under the helper model's own provider.
+
+**Images.** When the thread's model cannot see images, Quaka reads each image for it: the text on this machine (Live Text on macOS; Tesseract elsewhere if installed), its colors, and a description from the model picked here. Unset uses the small model if it can see, then Claude Haiku when an Anthropic key is saved. Each image is read once and remembered. The description counts toward your daily budget and sends the image to that model's provider, never while air-gapped except a model on this machine.
+
+## Spend
+
+**Daily spend cap** is off by default. Set a dollar amount and runs pause to ask when today's total reaches it. The total is per UTC day. Local models cost nothing.
+
+**Prices for other models** lets the cap count models Quaka has no built-in price for. It takes JSON: a model id, then input and output USD per million tokens. Anthropic models are built in. Flex and Batch jobs are charged at half.
+
+**Half-price thread summaries** decides how a summary is bought when a long thread needs one. The default is Flex. Off makes it at the standard price when you send. Flex uses the provider's discounted tier on OpenAI and Gemini. Flex and Batch also uses Claude's Message Batches. A summary that is not ready when you send is cancelled and made at the normal price.
+
+## The decision layer
+
+The decision layer is a local model, Kev-4B, that is asked about real decisions in the background: how risky a command is, which mode a thread wants, whether a write is in scope, and whether a call fits your policy. Its answers are logged next to what actually happened. Nothing it says changes a run. It is off by default.
+
+Turning the switch on does not download the model. The row offers the download separately: one quantization chosen to fit the machine's memory, from a pinned revision, checked against its SHA-256 before use. It needs `llama-server` on your PATH. The model listens only on this machine's loopback interface and works in air-gapped mode; only the download needs the network.
+
+## Limits
+
+- **A model is not a verification.** A confident answer can be wrong. The proof card checks the repository's commands and tests, not the model's reasoning.
+- **The provider sees what the model sees.** Prompts, file contents, command output and attachments go to the provider you picked. A local model keeps them on the machine; a hosted one does not.
+- **Context is not memory.** A larger window lets a thread send more, and costs more. It does not make the model remember a different thread.
+- **A CLI provider runs its own loop.** Quaka contains the process and gates the calls it can see. The CLI's internal tool choices, context handling and model behavior are its own.
+- **ACP agents can be unsandboxed.** If you turn that on, the agent is outside the sandbox. Quaka's firewall and approvals still apply to what it asks Quaka to do, not to what it does itself.
+- **Helper models can differ.** A summary, an image description or a review check may come from a different provider than the thread. Its usage is counted under that provider.
+- **Prices can change.** The built-in prices are a convenience. A provider's bill is the authority.

@@ -1,0 +1,81 @@
+---
+title: Security model
+description: Five layers between a model's suggestion and your machine, what each one enforces by default, and where each one ends.
+---
+
+A prompt is a request. A harness is a boundary.
+
+Every coding agent can ask for the same things: run this command, edit this file, open that page, push this branch. What separates one harness from another is what happens next. Quaka answers with five layers, each enforced by the app or the operating system rather than requested in a system prompt.
+
+They overlap on purpose. Each layer is useful alone. Together they cover the distance between "the model said it would" and "the machine did it".
+
+## The five layers
+
+| Layer | The question it answers | Default |
+| --- | --- | --- |
+| [Sandbox](/docs/security/sandbox) | What can a shell command touch? | On. Network on. Docker socket off. |
+| [Firewall](/docs/security/firewall) | Which hosts can a run reach? | Observe. Every host through the proxy is recorded, none is refused. |
+| [Untrusted input](/docs/security/untrusted-input) | Whose text is steering the run? | Taint tracking on. Work in a copy after someone else's text. |
+| [Proof](/docs/security/proof) | Is the change actually done? | Block. A failed check goes back to the agent. |
+| [Approvals](/docs/security/approvals) | Who says yes to a side effect? | Smart. Routine work in the project runs; the rest asks. |
+
+## The default setup
+
+A fresh install is not a blank slate. These are the choices Quaka makes before you change anything.
+
+| Setting | Default | What it means |
+| --- | --- | --- |
+| Sandbox shell commands | On | `bash` runs inside the operating system's sandbox. |
+| Sandboxed commands may use the network | On | Dev servers and package installs work; the firewall still sees what they reach. |
+| Sandboxed commands may use Docker | Off | A container cannot be used to mount a folder the sandbox hides. |
+| Network firewall | Observe | Every host a sandboxed command reaches through the proxy is recorded. Nothing is refused. |
+| Approvals | Smart | Edits and contained commands run; flags, network, pushes and anything outside the project ask. |
+| Verify before done | Block | A Build or Debug run that changed files must pass the repository's checks before it counts as done. |
+| Work in a copy after someone else's text | On | A run that starts from an issue, a pull request or a web page edits a copy you apply. |
+| Work in a copy when a task links to a site | On | A message with an outside link starts the run in a copy. |
+| Air-gapped mode | Off | When on, only local models run and commands lose the network. |
+
+The default is a working posture, not a locked one. The rest of this section takes each layer in turn: what it does, what it looks like when it acts, which settings change it, and where it stops.
+
+## One run, five layers
+
+A thread starts from a GitHub issue. The issue is real work, and it also contains a line addressed to an AI agent: a command to download and run a setup script. The person who wrote the issue is not the person running the agent.
+
+<Figure backdrop="web" moment="The first card" caption="A run that started from someone else's text still gets a card for a command that would leave the machine. The reason line names the source.">
+  <IssueStartFragment />
+</Figure>
+
+What happens next is the whole model in one run.
+
+1. **Untrusted input** marks the run at its first step, because the issue text came from someone else. The run works in a copy of the project. Routine edits and commands stay in the copy. Actions that leave it wait.
+2. **Approvals** shows the card above. A tainted run cannot use a saved rule, an automation grant or a reviewer to wave a side effect through. The card says why.
+3. **Sandbox** runs the command with the operating system's confinement. If the script tries to read `~/.aws/credentials`, the read fails even though the install continues.
+4. **Firewall** records the host the script contacted. Under Observe it lets the connection through and writes it to the ledger. Under Ask it waits for you. Under Allowlist it refuses a host that is not on the list.
+5. **Proof** runs when the run is about to finish. The repository's checks run, and each test the run added or changed must fail without the change and pass with it. A failure goes back to the agent in Block mode.
+6. You review the diff and the held actions, then apply the result to your checkout. Nothing reached your working tree before that.
+
+No single layer catches everything. The copy contains the edits. The sandbox contains the command. The firewall sees the connection. The proof checks the claim. The approval is the moment a person decides.
+
+## Where the layers end
+
+| Layer | Covers | Does not cover |
+| --- | --- | --- |
+| Sandbox | `bash` commands, and Claude Code or Codex when their sandbox setting is on, on macOS, Linux and supported Windows builds. | File tools, MCP servers, the browser, CLI agents with their sandbox setting off, or Quaka's own requests. |
+| Firewall | Sandboxed commands under Ask and Allowlist, on a machine where the OS sandbox can make the proxy the only way out. | A process that ignores proxy settings, DNS on Windows, or the app's own traffic. |
+| Untrusted input | Text a run reads from outside your workspace. | Content you wrote, content already in the workspace, or a determined model that never calls a tool. |
+| Proof | Build and Debug runs that changed files. | Read-only runs, uncommitted setup, or whether the change is the right product decision. |
+| Approvals | Side effects the harness gates. | A person who approves without reading, or a remote run where nobody can be asked. |
+
+## Read the layers in order
+
+- [Sandbox](/docs/security/sandbox) starts with the operating system and ends with the commands it cannot hold.
+- [Firewall](/docs/security/firewall) is the network half of the same boundary.
+- [Untrusted input](/docs/security/untrusted-input) is what changes when the text in the thread is not yours.
+- [Proof](/docs/security/proof) is how a run earns the word done.
+- [Approvals](/docs/security/approvals) is where the harness stops and a person decides.
+
+## Limits
+
+This section describes the app's defaults, not a hardened deployment. A machine that is already compromised, a malicious dependency that runs outside `bash`, a model provider that logs your prompts, and a person who clicks Allow without reading are all outside these five layers. The layers reduce what a mistaken or manipulated run can do. They do not make a promise that no run can ever do harm.
+
+Each layer page ends with its own limits. Read those before you rely on a setting for a threat model of your own.

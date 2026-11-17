@@ -1,0 +1,89 @@
+---
+title: Quickstart
+description: From a model to a first useful run, in the order the app asks for it.
+---
+
+This page follows the first ten minutes. It assumes Quaka is installed and you have an invite. If not, start with [Install](/docs/install).
+
+## 1. Finish onboarding
+
+The first launch opens four steps.
+
+1. **Welcome.** Read what stays on the machine, then choose **Get started**.
+2. **Provider.** Pick Anthropic, OpenAI or Gemini, or one of the other options. If Claude Code or Codex is already installed, Quaka offers it first: it uses your existing login and needs no API key. **Continue** moves on. A CLI provider finishes immediately with **Use it**.
+3. **API Key.** Paste the key. It is stored locally, in the operating system's keychain, and sent only to that provider. **Save & continue** checks it. **Skip for now** is allowed; you can add a key later in Settings.
+4. **Done.** Choose **Start coding**.
+
+You can add providers, local models and custom endpoints later. The [Models](/docs/models) page lists the options.
+
+## 2. Open a project
+
+Choose **Open Project** in the command palette or the sidebar. Pick a folder. If it is a git repository, Quaka reads the branch and the status. If it is a plain folder, the file tools still work, but diffs, branches, pull requests and Replay do not.
+
+You can also clone a repository from the command palette, or start a project from a template. A new project starts in its own folder.
+
+## 3. Ask for something small
+
+The message box starts in **Build** mode. Build can edit files and run commands. If you only want an answer, switch to **Ask** or **Plan** first. Both are read-only.
+
+A useful first request names the outcome and the place:
+
+> Add a test for the retry helper in `src/retry.ts`. It should fail when the third attempt throws, and pass after the fix.
+
+Then press Enter. Shift+Enter adds a newline instead of sending.
+
+The agent reads the files it needs, proposes a change, and asks before anything that leaves the project. The run streams into the thread as it works.
+
+## 4. Watch the run
+
+A run is a sequence of steps. Each step can read a file, search the project, edit a file, run a command, open a page or call a tool. The thread shows the step and its result.
+
+- A command that stays inside the sandbox and does not reach the network runs without a card.
+- A file edit inside the project runs without a card in Build mode.
+- A command that leaves the project, pushes, opens a pull request, calls an MCP tool, or reads a credential asks first.
+- A run that started from someone else's text works in a copy. Routine work in the copy runs; what leaves the copy waits.
+
+The [Approvals](/docs/security/approvals) page explains the card and the three modes.
+
+## 5. Review the change
+
+When the run stops, open the diff. It shows every file the run changed, with the before and after text. Read it before you accept it.
+
+If the run worked in a copy, the thread shows an apply card: the changed files, and the actions it held back, in order. Applying the files and running the held actions are separate decisions. You can apply the files and reject the push.
+
+If the run worked in place, the change is already in your working tree. Revert it with git if you do not want it.
+
+## 6. Read the proof
+
+A Build or Debug run that changed files ends with a proof card. The card says what was checked:
+
+- **Checks:** the commands the repository uses, and whether they passed.
+- **Tests:** a new or changed test that fails without the change and passes with it.
+- **Reviewer:** a second model's read of the claim, when one is configured.
+- **Outcome:** Tested, Checks pass, Not verified or Unverified.
+
+The default is **Block**: a failed check goes back to the agent, up to two times, before the run can call itself done. The [Proof](/docs/security/proof) page explains each outcome.
+
+## 7. Make it yours
+
+Three settings are worth knowing early:
+
+- **Approvals:** Smart, Always ask or Auto. Smart is the default. [Approvals](/docs/security/approvals).
+- **Sandbox:** on by default, with network access for package installs. Turn the network off for a repository you do not trust. [Sandbox](/docs/security/sandbox).
+- **Daily spend cap:** off by default. Set one if you use an API key and want a hard stop. [Models](/docs/models).
+
+## What a good first run looks like
+
+<Figure backdrop="desktop" moment="Done, and tested" caption="A Build run that changed two files, with the check it ran and the test that fails without the change. The proof is the run's claim about itself; the diff is what you review.">
+  <ProvenFragment />
+</Figure>
+
+The run above is small on purpose. A first run should be a change you can read in a minute, in a project you know. Once that works, give the agent a real issue, a failing test or a pull request.
+
+## Limits
+
+- **A first run is not a benchmark.** One good result says the setup works. It does not say the model is right about the next change.
+- **Build is not the only mode.** If you wanted an answer and got an edit, you were in Build. Ask and Plan cannot write.
+- **The sandbox is not a guarantee.** It contains writes and limits what a command can read. It does not make a command harmless. [Sandbox limits](/docs/security/sandbox#limits).
+- **Proof is local.** It checks the repository's own commands and the tests the run added. It cannot know that the test is the right test, or that the change is the one you wanted.
+- **The copy is not a backup.** Applying a run writes its files into your checkout. If you discard the run, its copy is removed. Commit or stash work you care about before a large run.

@@ -1,0 +1,81 @@
+---
+title: Firewall
+description: The network boundary around a run, the four modes it can be in, and why it is enforced for some processes and advisory for others.
+layer: firewall
+---
+
+The sandbox decides what a command can touch on disk. The firewall decides where it can connect. Both are part of the same boundary: a command that cannot write outside the project but can upload the project anywhere is not contained.
+
+## The default
+
+The firewall is set to **Observe**. Every host that goes through the run's proxy is recorded in a ledger. Nothing is refused. That is the default because it is the mode least likely to break a real project on the first run, and because the ledger is useful before you start blocking anything.
+
+The desktop app does not currently show a control for this setting. The stored value is what applies. The modes below are the values it accepts, and the behaviour each one produces.
+
+## The four modes
+
+| Mode | Unknown host | Recorded | Use it when |
+| --- | --- | --- | --- |
+| Off | Allowed | No | You do not want the proxy or the ledger at all. |
+| Observe | Allowed | Yes | You want to learn what a project reaches before you restrict it. This is the default. |
+| Ask | Waits for you on the desktop | Yes | You want to decide per host, once per run. |
+| Allowlist | Refused | Yes | You know the hosts a project needs and want everything else stopped. |
+
+The allowlist is not a list you maintain by hand in the docs. It is the run's set of allowed hosts: the model provider's host, a small set of built-ins, and any host the user has added for that repository. A host matches itself, and an entry written as `*.example.com` matches its subdomains but not `example.com` itself.
+
+## What happens to a connection
+
+Every decision is one of five values in the ledger.
+
+| Decision | Meaning |
+| --- | --- |
+| Allowed | The host is on the allowlist, is this machine's loopback, or the mode is Off. |
+| Observed | The host is not on the allowlist, and Observe let it through. |
+| Approved | The host is not on the allowlist, and you allowed it for this run. |
+| Denied | The host is not on the allowlist, and you refused it, or no answer came in time. |
+| Blocked | Refused without asking: Allowlist mode, a run nobody can be asked in, or air-gapped mode. |
+
+In Ask, the first connection to an unknown host waits for a card on the desktop. Your answer holds for that host for the rest of the run, so a test suite that opens fifty connections to the same host asks once. A run started remotely, by an automation, or anywhere else nobody is watching cannot ask. It blocks instead.
+
+## What you see
+
+The card below is the Ask moment. The command is a test run; the host is not on the allowlist; the answer covers this host until the run ends.
+
+<Figure backdrop="web" moment="The connection card" caption="In Ask, a sandboxed command waits at the network boundary. The card names the host and says how long the answer lasts.">
+  <ConnectionCardFragment />
+</Figure>
+
+The ledger is the record after the fact: which host, which run, how many connections, how many bytes each way, and which decision. In Observe it is the only trace. In Ask and Allowlist it is the audit trail.
+
+## What the firewall covers
+
+This is the part that is easy to overstate. The firewall is enforced for sandboxed `bash` commands and for sandboxed Claude Code and Codex processes when the operating system can make the proxy the only way out. It is advisory for the browser and MCP servers, and absent for the app's own traffic.
+
+| Process | What the firewall does |
+| --- | --- |
+| Sandboxed `bash` on macOS, Linux and supported Windows builds | Enforced in Ask and Allowlist. The OS sandbox denies every outbound connection except the run's proxy, and on Linux the run gets a network namespace with only loopback and the proxy. |
+| Sandboxed `bash` in Observe or Off | The proxy is still offered, but a tool that ignores the proxy variables can connect directly. In Observe it is unrecorded. |
+| Quaka's browser tool | Advisory. The browser is pointed at the proxy. A page or a browser feature that ignores it is not stopped. |
+| MCP servers | Advisory. The server is started with proxy variables; a server that ignores them can reach the network. |
+| Claude Code and Codex CLI agents | Enforced in Ask and Allowlist when their sandbox setting is on, which is the default: the CLI process and the commands it starts run inside the OS sandbox and use the run's proxy. With that setting off, advisory only. |
+| Quaka's own model requests, updates and team bot | Not covered. These are the app's own traffic, not a run's. |
+
+Air-gapped mode is stricter for the processes it can reach: the proxy refuses every host off the machine, and the browser is limited to localhost. It still cannot sandbox an MCP server or a CLI agent that ignores proxy settings. The settings page says this in the air-gap description, and the [sandbox page](/docs/security/sandbox) says it again under Limits.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Network firewall | Observe | Off, Observe, Ask or Allowlist. The app stores the value; it does not currently expose a control. |
+| Sandboxed commands may use the network | On | Off makes every sandboxed command loopback-only, regardless of the firewall mode. |
+| Air-gapped mode | Off | On refuses every host off the machine for the processes the proxy covers. Only local models run. |
+
+## Limits
+
+- **Enforcement depends on the sandbox.** If the OS backend is missing, or the command is not sandboxed, Ask and Allowlist only cover processes that honour the proxy variables. A raw socket, a JVM, or an Xcode tool can go around them. The app reports whether the firewall can be enforced on this machine in Settings, Harness, Safety.
+- **Observe is not a block.** It records what it sees. A connection that never uses the proxy is neither seen nor recorded.
+- **The decision is per host, not per request.** The firewall does not inspect paths, methods, headers, or bodies. A host you allow is allowed for every request to it in that run.
+- **Windows leaks DNS.** Names resolve inside the sandbox through Windows' DNS Client, so a command can encode data in query names that the proxy never sees. macOS closes the resolver, and Linux gives the run its own network namespace, but the Windows gap remains.
+- **The app's own traffic is outside the model.** Quaka's requests to a model provider, its update check, and the hosted team bot do not go through the run firewall. They are governed by the provider you chose and the app's own network code, not by this ledger.
+- **A proxy is not a content filter.** It can tell you that a host was contacted. It cannot tell you whether the request was benign, and it does not decrypt TLS to inspect the body.
+- **An approval is only as good as the card.** The card names the host and the run. It does not explain what the command will do with the connection. Read the command, not just the host.

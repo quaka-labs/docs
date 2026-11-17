@@ -1,0 +1,81 @@
+{
+  "source": "the app's global keyboard handler",
+  "note": "Cmd on macOS, Ctrl on Windows and Linux. Option on macOS is Alt elsewhere.",
+  "shortcuts": [
+    {
+      "mac": "Cmd N",
+      "other": "Ctrl N",
+      "action": "New thread"
+    },
+    {
+      "mac": "Cmd K",
+      "other": "Ctrl K",
+      "action": "Open the command palette"
+    },
+    {
+      "mac": "Cmd B",
+      "other": "Ctrl B",
+      "action": "Show or hide the sidebar"
+    },
+    {
+      "mac": "Cmd + or Cmd Shift +",
+      "other": "Ctrl + or Ctrl Shift +",
+      "action": "Zoom in"
+    },
+    {
+      "mac": "Cmd -",
+      "other": "Ctrl -",
+      "action": "Zoom out"
+    },
+    {
+      "mac": "Cmd 0",
+      "other": "Ctrl 0",
+      "action": "Reset zoom to 100%"
+    },
+    {
+      "mac": "Cmd ,",
+      "other": "Ctrl ,",
+      "action": "Open Settings"
+    },
+    {
+      "mac": "Cmd Option L",
+      "other": "Ctrl Alt L",
+      "action": "Go to the next thread that needs you"
+    },
+    {
+      "mac": "Cmd L",
+      "other": "Ctrl L",
+      "action": "Focus the message box"
+    },
+    {
+      "mac": "Cmd J",
+      "other": "Ctrl J",
+      "action": "Show or hide the terminal"
+    },
+    {
+      "mac": "Cmd R",
+      "other": "Ctrl R",
+      "action": "Run the workspace"
+    },
+    {
+      "mac": "Cmd T",
+      "other": "Ctrl T",
+      "action": "New tab"
+    },
+    {
+      "mac": "Cmd W",
+      "other": "Ctrl W",
+      "action": "Close the current tab"
+    },
+    {
+      "mac": "Cmd 1 to 9",
+      "other": "Ctrl 1 to 9",
+      "action": "Jump to a tab"
+    },
+    {
+      "mac": "Cmd Shift [ or ]",
+      "other": "Ctrl Shift [ or ]",
+      "action": "Previous or next tab"
+    }
+  ]
+}

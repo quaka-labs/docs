@@ -1,0 +1,87 @@
+---
+title: Memory
+description: Notes Quaka carries into every thread, and the other stores it can send them to.
+---
+
+Memory is what Quaka knows about you and your projects between threads. It is a short list of notes, not a transcript. Every thread gets the notes that fit, with any model, including Claude Code and Codex.
+
+The point is continuity: a preference, a convention, a fact about a project that you should not have to repeat. The risk is the same: a note is a claim, and a wrong note travels into every later conversation.
+
+## The default
+
+Memory is on. Notes live on this computer, in the app's data folder. A new note can be about you or about one project:
+
+- **About you** notes go to every project.
+- **This project** notes go to one project, keyed by its main checkout.
+
+Quaka adds notes in three ways:
+
+- **You add one** in Settings, Memory. Write it in the field and choose who it is about.
+- **The agent saves one** with its `remember` tool when you ask it to remember something.
+- **A thread summary lists one.** When a long thread is summarized, the summary can name a lasting fact worth keeping.
+
+A note is shown in the list with where it came from: added by you, saved by the agent, from a thread summary, or imported from another tool.
+
+## Waiting for approval
+
+A note written by a run that read untrusted content waits. That includes a web page, an issue, a pull request or any other text you did not write. The note sits in **Waiting for your approval**, with the reason it was held, and no model sees it until you approve it.
+
+This is the memory version of the taint rule. Without it, a page could plant an instruction in memory and have every later thread read it.
+
+Notes you write yourself, and notes from a run that read only your own project, are active immediately.
+
+## How notes are used
+
+A thread gets the notes that fit its model's context window. The rest are available through the agent's `memory_search` tool, so a large memory does not have to be sent in full on every step.
+
+The agent can search memory when a task needs a fact it was not given. It can also save a new note when you ask it to remember something.
+
+You can edit or delete any note. Deleting a note removes it from the list and from later prompts. It does not remove a copy that was already sent to a hosted store, if you turned one on.
+
+Once there are more than eight notes, the list gets a search field.
+
+## Other memory stores
+
+The notes on this computer are the original. A store is a second place they can go:
+
+| Store | What it is | What to know |
+| --- | --- | --- |
+| Supermemory | A hosted memory API, or your own self-hosted one. | Your active notes are sent there, and it extracts memories from them later. |
+| Mem0 | A hosted memory API. | Your active notes are sent word for word. Quaka asks it not to rewrite them. |
+| Zep | A hosted memory graph. | Your notes go into one graph for you and one per project. |
+| Graphiti | An MCP server on your computer. | It gives no id to delete by, so a note you edit or delete in Quaka keeps its earlier copy there. |
+| Another memory server | Any MCP server with an add tool and a search tool. | You name the tool and its text argument. The same delete caveat applies. |
+
+A store needs a URL and, for a hosted one, a key. The key is stored in the operating system's keychain. **Test** checks the connection before you rely on it.
+
+When a store is on:
+
+- Active notes are sent to it. Pending notes never leave this computer.
+- The agent's `memory_search` asks the store as well as the local list.
+- What the store returns is treated as untrusted. It can inform an answer, but it cannot approve a side effect.
+- A note that fails to sync is retried, and the row shows how many are failing.
+
+The local copy stays. Turning a store off stops new sends; it does not delete what the store already has.
+
+## Sync
+
+If you turn on device sync, your notes are among the things that sync. The setting for memory itself is synced too, so a device that joins later starts with the same choice.
+
+A memory store's key and address stay on the device where you set them. They are not carried to another device.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Use memory | On | Gives every thread the notes. Off, the notes stay in the list and no thread gets them. |
+| Other memory stores | Off | Sends active notes to the store and lets `memory_search` ask it. |
+
+## Limits
+
+- **A note is a claim, not a fact.** It can be stale, incomplete or wrong. A wrong preference can steer every later thread.
+- **A note is small.** Memory is not a transcript and not a substitute for reading the code. The agent still has to look.
+- **Approval protects the source, not the content.** A note from an untrusted run waits, but a note you approve can still be misleading.
+- **A hosted store sees your notes.** Supermemory, Mem0 and Zep receive them. Their retention and processing are theirs, not Quaka's.
+- **A store's answer is untrusted.** What comes back can be wrong or manipulated. It cannot approve a side effect.
+- **Deleting locally is not deleting everywhere.** An MCP memory server may keep an earlier copy, and a hosted store keeps what it received under its own policy.
+- **Memory is not a backup.** It holds notes, not your threads, files or settings. Sync and your own backups are separate.

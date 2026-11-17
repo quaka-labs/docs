@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+@import "./site.css";
+@import "./quaka.css";
+@import "./home.css";
+@import "./sections.css";
+@import "./motion.css";
+@import "./docs.css";

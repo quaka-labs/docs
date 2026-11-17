@@ -1,0 +1,849 @@
+{
+  "source": "the app's settings registry",
+  "count": 56,
+  "groups": [
+    {
+      "id": "containment",
+      "title": "Containment",
+      "blurb": "What a shell command may touch, and whether a run works in place or in a copy.",
+      "rows": [
+        {
+          "key": "sandbox_enabled",
+          "label": "Sandbox shell commands",
+          "summary": "Runs shell commands inside the operating system's sandbox, with writes limited to the project, temporary folders and package caches.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "sandbox_network",
+          "label": "Sandboxed commands may use the network",
+          "summary": "Lets sandboxed commands reach the network. Off, package installs and dev servers that fetch anything fail.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "sandbox_container_socket",
+          "label": "Sandboxed commands may use Docker",
+          "summary": "Lets sandboxed commands reach Docker's or Podman's socket. A container can mount any folder on the machine, so this opens a way around the sandbox.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "air_gapped",
+          "label": "Air-gapped mode",
+          "summary": "Only local models run. Web search is removed, the browser opens localhost only, and shell commands lose the network.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "undo_tainted_runs",
+          "label": "Work in a copy after someone else's text",
+          "summary": "A run started from an issue, a pull request or a page works in a copy. Routine work in the copy runs; pushes, pull requests and MCP calls wait for one apply.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "undo_browsing_runs",
+          "label": "Work in a copy when a task links to a site",
+          "summary": "A message that links to a site off this machine starts in a copy, before the page is read. Reading the page still marks the run as untrusted.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "firewall",
+      "title": "Firewall",
+      "blurb": "What happens when a sandboxed command reaches a host.",
+      "rows": [
+        {
+          "key": "network_firewall",
+          "label": "Network firewall",
+          "summary": "What the firewall does with hosts a sandboxed command reaches: off, observe every host, ask about unknown hosts, or allow only known ones.",
+          "kind": "choice",
+          "default": "observe",
+          "options": [
+            "off",
+            "observe",
+            "ask",
+            "allowlist"
+          ],
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "approvals",
+      "title": "Approvals",
+      "blurb": "When a person is asked, and what the reviewer may approve.",
+      "rows": [
+        {
+          "key": "approval_mode",
+          "label": "When to ask",
+          "summary": "Smart asks for risky calls and anything that leaves the project. Always ask asks for every side effect. Auto adds a reviewer that may approve calls that fit your policy.",
+          "kind": "choice",
+          "default": "smart",
+          "options": [
+            "smart",
+            "always",
+            "auto"
+          ],
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "review_policy",
+          "label": "Review policy",
+          "summary": "The text the reviewer uses in Auto, and the policy that can make Smart ask. Up to 10,000 characters.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": 10000,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "verification",
+      "title": "Verification",
+      "blurb": "What a Build or Debug run has to show before it can call itself done.",
+      "rows": [
+        {
+          "key": "verify_done",
+          "label": "Verify before done",
+          "summary": "What a Build or Debug run that changed files must show: off, report failing checks, or block the done claim until they pass.",
+          "kind": "choice",
+          "default": "block",
+          "options": [
+            "off",
+            "report",
+            "block"
+          ],
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "verify_attempts",
+          "label": "Retries after a failed check",
+          "summary": "In block mode, how many times a failed verification goes back to the model.",
+          "kind": "count",
+          "default": 2,
+          "options": null,
+          "min": 0,
+          "max": 5,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "verify_timeout_secs",
+          "label": "Time for the fail-to-pass check",
+          "summary": "Seconds the check may take, both checkouts together. 30 to 3,600.",
+          "kind": "count",
+          "default": 600,
+          "options": null,
+          "min": 30,
+          "max": 3600,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "verify_strict_tests",
+          "label": "Strict new tests",
+          "summary": "A new or changed test that passes without the change fails verification instead of only warning.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "second-opinion",
+      "title": "Second opinion",
+      "blurb": "A model from another lab reads the claim after the local checks.",
+      "rows": [
+        {
+          "key": "second_opinion_model",
+          "label": "Second opinion model",
+          "summary": "The model from another lab that reads the claim. Unset, or the run's own lab, means no second opinion.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "second_opinion_done",
+          "label": "Second opinion on done",
+          "summary": "Another lab checks a run's done claim once verification proves it or its checks pass.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "second_opinion_review",
+          "label": "Second opinion on review findings",
+          "summary": "Another lab labels each finding a structured review kept.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "title": "Models and spend",
+      "blurb": "The model new threads start on, the helper models, context and the daily cap.",
+      "rows": [
+        {
+          "key": "daily_budget_usd",
+          "label": "Daily spend cap",
+          "summary": "Runs pause and ask when today's spend reaches this amount. 0 turns the cap off. Counted per UTC day.",
+          "kind": "number",
+          "default": 0,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "model_prices",
+          "label": "Prices for other models",
+          "summary": "USD per million tokens for models Quaka has no built-in price for, as JSON, so the daily cap can count them.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "agent_effort",
+          "label": "Reasoning effort",
+          "summary": "The default depth of thinking: the model's own, low, medium, high, extra high or max. Clamped to what each model accepts.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "agent_small_model_v2",
+          "label": "Small model for side jobs",
+          "summary": "The provider and model for summaries, explore subtasks, review checks and automation conditions. Unset uses the thread's model.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "image_model",
+          "label": "Model that describes images",
+          "summary": "Describes an image for a model that cannot see it. Unset uses the small model, then Claude Haiku when an Anthropic key is saved.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "default_model",
+          "label": "Default model",
+          "summary": "The model new threads start with. The model menu writes it; runs Quaka starts on its own also read it.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "decision_layer_enabled",
+          "label": "Decision layer",
+          "summary": "Asks a local model about real decisions in the background and logs its answers. It never decides anything.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "background_tier",
+          "label": "Half-price thread summaries",
+          "summary": "How a summary that a long thread needs is bought: off, flex, or flex and batch. A summary not ready when you send is cancelled and made at the normal price.",
+          "kind": "choice",
+          "default": "flex",
+          "options": [
+            "off",
+            "flex",
+            "batch"
+          ],
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "full_context",
+          "label": "Use each model's whole context window",
+          "summary": "Sends up to each model's whole context window instead of capping a thread at 200K tokens. Long threads cost more per message.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "model_windows",
+          "label": "Learned context windows",
+          "summary": "Context sizes learned from providers' too-long errors, for endpoints that do not publish them. Written by the app.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "Tools",
+      "blurb": "MCP, the browser, subagents, instructions and attachments.",
+      "rows": [
+        {
+          "key": "mcp_defer",
+          "label": "Load MCP tools on demand",
+          "summary": "With eight or more MCP tools connected, send a one-line index and load the schemas a step needs instead of every schema on every step.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "mcp_code_mode",
+          "label": "Let the agent script MCP tools",
+          "summary": "Offers a short JavaScript program over MCP results. Each MCP call the program makes still asks, as a direct call would.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "subagent_concurrency",
+          "label": "Parallel explore subtasks",
+          "summary": "How many read-only explore subtasks one turn runs at once. 1 to 16.",
+          "kind": "count",
+          "default": 4,
+          "options": null,
+          "min": 1,
+          "max": 16,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "writer_concurrency",
+          "label": "Parallel writers",
+          "summary": "How many writer subagents run at once, each in its own worktree. 1 to 8.",
+          "kind": "count",
+          "default": 2,
+          "options": null,
+          "min": 1,
+          "max": 8,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "instructions_global_claude",
+          "label": "Also use the personal Claude Code instructions",
+          "summary": "Adds the personal Claude Code instructions file to every run. Off by default: another tool's personal file is not read without asking.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "instructions_global_codex",
+          "label": "Also use the personal Codex instructions",
+          "summary": "Adds the personal Codex instructions file to every run, or its override file when one exists. Off by default.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "real_browser",
+          "label": "Use your own browser",
+          "summary": "Lets the agent use your browser through Quaka's extension, with your signed-in sessions.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "undo_read_only_mcp",
+          "label": "Read-only MCP servers",
+          "summary": "Servers whose tools an undoable run may call directly, because they only read. Names are comma separated.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "provider_files",
+          "label": "Upload attachments once",
+          "summary": "Uploads attached images and PDFs to the provider once and references them by ID afterwards, instead of sending their bytes every step.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "agents",
+      "title": "Claude Code, Codex and ACP agents",
+      "blurb": "Agents that run their own loop, and how Quaka contains them.",
+      "rows": [
+        {
+          "key": "cli_sandbox_claude_code",
+          "label": "Sandbox Claude Code",
+          "summary": "Runs Claude Code's own process inside the sandbox and under the firewall, and routes its tool calls through Quaka's approvals.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "cli_sandbox_codex",
+          "label": "Sandbox Codex",
+          "summary": "Runs Codex's own process inside the sandbox and under the firewall.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "acp_agents",
+          "label": "ACP agents",
+          "summary": "Agent Client Protocol agents Quaka can spawn and drive as the brain, with their launch commands.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "custom_providers",
+          "label": "Custom providers",
+          "summary": "OpenAI-compatible providers added in Settings. Their keys stay in the operating system's keychain.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "cli_account_switch",
+          "label": "Switch accounts when one runs out",
+          "summary": "When one Claude Code or Codex subscription account runs out mid-work, continue on the next saved account.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "memory-sync",
+      "title": "Memory and sync",
+      "blurb": "Notes every thread gets, and the relay that carries threads between your devices.",
+      "rows": [
+        {
+          "key": "memory_enabled",
+          "label": "Use memory",
+          "summary": "Gives every thread the notes in Memory, with any model, including Claude Code and Codex.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "sync_relay_url",
+          "label": "Sync relay",
+          "summary": "The relay device sync uses. Set per device when sync is turned on.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": 500,
+          "scope": "device",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "github",
+      "title": "GitHub",
+      "blurb": "Pull request watching, CI fixes and @quaka commands.",
+      "rows": [
+        {
+          "key": "github_watch_enabled",
+          "label": "Watch pull requests",
+          "summary": "Watches your pull requests for failing checks and review comments and starts a thread when one needs you.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "github_autofix_attempts",
+          "label": "CI fix attempts",
+          "summary": "How many times Quaka tries to fix a failing check before it asks instead. 0 turns CI fixes off.",
+          "kind": "count",
+          "default": 3,
+          "options": null,
+          "min": 0,
+          "max": 10,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "github_machine_users",
+          "label": "Machine users",
+          "summary": "GitHub logins whose comments are ignored, separated by commas, spaces or newlines.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "github_commands",
+          "label": "@quaka commands",
+          "summary": "Per repository, whether @quaka comments can start or steer a thread, and whether issue comments count.",
+          "kind": "json",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "undoable_pr_wakes",
+          "label": "Undoable fixes and replies",
+          "summary": "Runs CI fixes and review replies in a copy, with pushes and replies held for one apply.",
+          "kind": "flag",
+          "default": true,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "chat",
+      "title": "Chat and alerts",
+      "blurb": "Dictation, banners and spoken status.",
+      "rows": [
+        {
+          "key": "dictation_model",
+          "label": "Dictation model",
+          "summary": "The speech-to-text model dictation uses.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "notifications",
+          "label": "Banners",
+          "summary": "Banners for threads you cannot see: all, only what needs you, or off.",
+          "kind": "choice",
+          "default": "all",
+          "options": [
+            "all",
+            "needs_you",
+            "off"
+          ],
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "speech_enabled",
+          "label": "Speak status",
+          "summary": "Speaks a thread's status through the operating system's speech engine.",
+          "kind": "flag",
+          "default": false,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "speech_when",
+          "label": "When to speak",
+          "summary": "Only while no Quaka window has focus, or always.",
+          "kind": "choice",
+          "default": "unfocused",
+          "options": [
+            "unfocused",
+            "always"
+          ],
+          "min": null,
+          "max": null,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "speech_voice",
+          "label": "Voice",
+          "summary": "A voice name from the system's available voices. Empty uses the system default.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": 100,
+          "scope": "device",
+          "access": "webview"
+        },
+        {
+          "key": "speech_volume",
+          "label": "Speech volume",
+          "summary": "Speech volume, in percent. 10 to 100.",
+          "kind": "count",
+          "default": 100,
+          "options": null,
+          "min": 10,
+          "max": 100,
+          "maxChars": null,
+          "scope": "device",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "title": "Replay",
+      "blurb": "How many attempts a Replay task gets, and how long one may take.",
+      "rows": [
+        {
+          "key": "replay_repeats",
+          "label": "Repeats per task",
+          "summary": "How many graded attempts each task and config is topped up to. 1 to 20.",
+          "kind": "count",
+          "default": 3,
+          "options": null,
+          "min": 1,
+          "max": 20,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        },
+        {
+          "key": "replay_attempt_minutes",
+          "label": "Minutes per attempt",
+          "summary": "How long one Replay attempt may run before it is stopped and graded as it is. 5 to 240.",
+          "kind": "count",
+          "default": 45,
+          "options": null,
+          "min": 5,
+          "max": 240,
+          "maxChars": null,
+          "scope": "synced",
+          "access": "webview"
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "title": "Integrations",
+      "blurb": "The address the hosted team bot is managed through.",
+      "rows": [
+        {
+          "key": "team_bot_url",
+          "label": "Team bot address",
+          "summary": "The address the hosted team bot is managed through. Empty uses the default.",
+          "kind": "text",
+          "default": null,
+          "options": null,
+          "min": null,
+          "max": null,
+          "maxChars": 500,
+          "scope": "device",
+          "access": "webview"
+        }
+      ]
+    }
+  ]
+}

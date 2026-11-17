@@ -1,0 +1,72 @@
+---
+title: Sandbox
+description: How Quaka confines shell commands on macOS, Linux and Windows, and what the confinement does not cover.
+layer: sandbox
+---
+
+The sandbox is the first boundary. When the agent asks to run a shell command, the operating system confines what that command can write, what it can read, and where it can connect. The command still runs. It runs with less of your machine.
+
+## The default
+
+The sandbox is on when you install Quaka. Sandboxed commands may use the network, because dev servers and package installs need it. They may not use Docker's socket, because a container can mount any folder of the machine and would be a way around the sandbox.
+
+The `bash` tool is the main path through this boundary. Claude Code and Codex, when their sandbox setting is on, run inside the same boundary. Reading and editing files use separate tools with their own path checks, described under [Limits](#limits).
+
+## What the sandbox holds
+
+The policy is the same shape on every platform, even though the mechanism differs.
+
+- **Writes** are allowed inside the project, the system temp folder, and the package caches a build tool legitimately needs. Everything else is read-only or denied.
+- **Reads** of credential folders are denied: `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config/gh`, `~/.azure`, `~/.kube`, the macOS keychain folder, and `~/.docker`. Quaka's own data and log folders are denied too, so a command cannot read the database, the secrets file, or another run's worktree.
+- **Network** is allowed by default, through the run's proxy. With the network switch off, a command gets loopback and local database sockets, and nothing else. Air-gapped mode forces it off.
+- **Docker and Podman sockets** are denied unless you turn on "Sandboxed commands may use Docker". That switch is off by default for the reason above.
+- **Environment** is cleaned before the command starts: inherited variables that would hand over a credential, such as a git askpass or an SSH agent, are removed. The project's own variables are added.
+
+## Per operating system
+
+The mechanism is the operating system's, not Quaka's. That is the point: a bug in the agent cannot widen a policy the kernel is enforcing.
+
+| System | Mechanism | What it needs | What it holds |
+| --- | --- | --- | --- |
+| macOS | Seatbelt, through the system's `sandbox-exec` | Built into macOS | File writes, credential reads, outbound network. The resolver is closed, so hostnames go through the run's proxy. |
+| Linux | bubblewrap | `bwrap` installed, and unprivileged user namespaces allowed | File writes, credential reads, and a per-run network namespace with only loopback and the proxy in it. |
+| Windows 11 | Microsoft Execution Containers, Tier 1 | Windows 11 24H2 build 26100.9278 or later, or 25H2 build 26200.9278 or later, with the August 2026 update | File writes, credential reads, outbound network except the proxy. DNS still resolves outside it. |
+| Anything else | None | A supported backend | Nothing. Commands run with your full access, and the thread says so once per session. |
+
+On Linux, bubblewrap being installed is not enough. The kernel must allow unprivileged user namespaces, and AppArmor must not refuse them. Ubuntu 24.04's default AppArmor policy can refuse `bwrap` without a profile, and then every sandboxed command would fail. Quaka probes this once and falls back to an unsandboxed shell with a note, rather than pretending the sandbox is active.
+
+On Windows, the sandbox is the operating system's process security environment, not a container. It is available only on the builds above. The app shows the build it found and the limitations that apply to it under Settings, Harness, Safety.
+
+## What you see
+
+The install script below is the kind of thing a dependency can run without asking. It tries to read your AWS credentials. The install completes. The read does not.
+
+<Figure backdrop="airgap" moment="Denied at the file" caption="A package's postinstall script reaches for a credential file. Seatbelt, bubblewrap or the Windows sandbox refuses the read, and the package install still finishes.">
+  <SandboxDenialFragment />
+</Figure>
+
+The thread shows the command, its output, and the failure. It does not show a second card asking whether the script may read your home folder. The operating system already answered.
+
+Settings, Harness, Safety ends with a row for this machine: which backend is active, whether the firewall can be enforced with it, and the platform's known limitations. That row is the honest answer for the machine in front of you, not a generic claim.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Sandbox shell commands | On | Off runs every command with your full access. The thread says so. |
+| Sandboxed commands may use the network | On | Off gives sandboxed commands no outbound network. Dev servers and package installs stop working. Forced off in air-gapped mode. |
+| Sandboxed commands may use Docker | Off | On lets a command reach Docker's or Podman's socket. A container can mount any folder of the machine, so this is a way around the sandbox. Not enforced on Windows. |
+| Air-gapped mode | Off | On allows only local models, removes web search, limits the browser to localhost, and takes the network away from shell commands. |
+| Work in a copy after someone else's text | On | A run that starts from someone else's text edits a copy you apply. See [Untrusted input](/docs/security/untrusted-input). |
+| Work in a copy when a task links to a site | On | A message that links to an outside site starts in a copy. |
+
+## Limits
+
+- **The sandbox does not cover every tool.** The file tools refuse paths outside the workspace themselves, but they are not inside the OS sandbox. MCP servers, the browser and Quaka's own HTTP requests are outside it. Claude Code and Codex run inside it when their sandbox setting is on, which is the default; with that setting off, the CLI runs with your access. The [firewall](/docs/security/firewall) is enforced for sandboxed CLI agents and advisory for the browser and MCP servers.
+- **The workspace is trusted.** A command can read every file in the project, including a secret someone committed. The sandbox hides your home folder, not your repository.
+- **The Docker switch is a real hole.** With it on, a command can start a container with any folder mounted and step outside every rule above. It is off by default and should stay off unless a project needs containers.
+- **A missing backend means no sandbox.** If `sandbox-exec` is missing on macOS, `bwrap` cannot make its namespaces on Linux, or Windows is older than the supported build, commands run unsandboxed. The app says so in the thread and in Settings; it does not silently degrade.
+- **macOS Seatbelt is a policy profile, not a virtual machine.** It restricts file and network operations. It does not hide the process from the rest of the system, and it does not protect against a kernel bug or a malicious binary that exploits one.
+- **Linux network namespaces are per run.** A dev server started inside a copy cannot be reached by Quaka's browser on Linux, because the browser is outside that namespace. Run the task in place if you need to preview it.
+- **Windows has known gaps.** Git Bash and other MSYS2 programs can fail to start inside the sandbox, which breaks shell-script git hooks. Node's `fs.realpath.native` and some git working-directory lookups can fail with `EPERM`. Programs started in the background are stopped when the command ends. DNS still resolves through Windows' DNS Client, so the firewall cannot see data leaked in query names. PowerShell 5.1's `Invoke-WebRequest` reads the system proxy instead of the run's proxy and fails under Ask or Allowlist. Servers started inside the sandbox cannot be reached from outside it before build 26100.9550 or 26200.9550.
+- **A sandbox is not a proof of safety.** It reduces the blast radius of a command. It does not decide whether the command was a good idea. That is what [approvals](/docs/security/approvals) and [proof](/docs/security/proof) are for.

@@ -1,0 +1,55 @@
+---
+title: Welcome
+description: What Quaka is, what it enforces, and the shortest path from an invite to a first useful run.
+---
+
+Quaka is a desktop harness for coding agents. It runs Claude, GPT, Gemini or a local model on your own machine, and it enforces in code what other tools only ask a model to do in a prompt.
+
+The model can ask to run a command, edit a file, open a page or push a branch. Quaka decides what reaches the machine, what happens when it does, and what a run has to show before it can call itself done.
+
+<HomeGrid>
+  <HomeCard href="/docs/install" kicker="Start here" title="Install Quaka">
+    What the app needs, how the invite works, and what to expect on the first launch.
+  </HomeCard>
+  <HomeCard href="/docs/quickstart" kicker="Start here" title="Quickstart">
+    From a model to a first useful run, in the order the app asks for it.
+  </HomeCard>
+  <HomeCard href="/docs/security" kicker="The harness" title="Security model" layer="#7b84ff">
+    Five layers between a suggestion and your machine, and where each one ends.
+  </HomeCard>
+  <HomeCard href="/docs/threads" kicker="Using Quaka" title="Threads">
+    Modes, tabs, copies, side chats and the inbox that tells you what needs you.
+  </HomeCard>
+  <HomeCard href="/docs/workspace" kicker="Using Quaka" title="Workspace">
+    Files, diffs, terminals, the browser and the Run button, in one project.
+  </HomeCard>
+  <HomeCard href="/docs/replay" kicker="Using Quaka" title="Replay">
+    Re-run merged pull requests on another model and let the tests grade the answer.
+  </HomeCard>
+</HomeGrid>
+
+## The short version
+
+A fresh install is already opinionated. Shell commands run in the operating system's sandbox. A run that starts from someone else's text works in a copy. A Build run that changed files has to pass the repository's checks. A side effect that leaves the project asks you first.
+
+That is the default posture. Every setting that changes it is documented, and every security page ends with what the layer does not cover.
+
+## Quaka is invite only
+
+There is no download button on this site and no public build URL. Join the waitlist and we will send one email when your invite is ready.
+
+<div className="docs-waitlist" id="waitlist">
+  <span className="docs-waitlist-kicker">Get access</span>
+  <p className="docs-waitlist-title">Join the waitlist</p>
+  <p className="docs-waitlist-copy">Quaka is invite only. The list is the only public way in.</p>
+  <WaitlistForm id="welcome-waitlist" align="start" />
+</div>
+
+The product is not open source. This site is public so the documentation can be read, linked and indexed. The application, its source and its internals are not. If you need help with an invite, write to [hello@quaka.app](mailto:hello@quaka.app).
+
+## Where to go next
+
+- New to Quaka: [Install](/docs/install), then [Quickstart](/docs/quickstart).
+- Deciding whether to trust a run: [Security model](/docs/security), then [Sandbox](/docs/security/sandbox).
+- Looking for a setting or a key: [Settings](/docs/settings) and [Keyboard shortcuts](/docs/shortcuts).
+- Stuck: [Help](/docs/help).

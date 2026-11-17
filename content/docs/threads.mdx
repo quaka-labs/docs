@@ -1,0 +1,105 @@
+---
+title: Threads
+description: Modes, tabs, the sidebar, the inbox, side chats and the copies a thread can work in.
+---
+
+A thread is one conversation with one workspace, one model and one mode. It keeps its messages, the files it read, the commands it ran, its usage and its proof. You can leave it, close the app and come back; the thread is still there.
+
+A project can have many threads. A thread belongs to one project at a time, and its first send fixes that binding.
+
+## The default
+
+A new thread starts in **Build** mode, on the model you last used, in the project you have open. It can read files, edit files and run commands. Anything that leaves the project asks first.
+
+The sidebar groups threads by what they need:
+
+| Section | What is in it |
+| --- | --- |
+| Pinned | Threads you pinned, whatever their status. |
+| Needs you | A prompt is waiting, a proof is disputed, a pull request needs attention, or a copy is ready to apply. |
+| Errors | The last run failed. |
+| Ready for review | A run finished, a pull request is open, or changes are uncommitted. |
+| Working | A run is going. |
+| Waiting | A run is waiting on something, such as a setup script or a rate limit. |
+| Recent | Everything else, grouped by project. |
+
+A thread with a dot is unread or needs attention. The dot is the same in the tab and the sidebar.
+
+## Modes
+
+The mode menu is in the message box. The mode decides which tools the agent may use.
+
+| Mode | What it does | What it may touch |
+| --- | --- | --- |
+| Build | Edits files, runs commands and ships the change. This is the default. | Every tool. |
+| Ask | Answers a question. | Read-only tools. |
+| Plan | Writes an implementation plan. | Read-only tools. |
+| Review | Reviews the diff, runs tests and reports findings. | Read-only tools, plus shell commands for tests. |
+| Debug | Reproduces a bug, isolates it, makes a minimal fix and verifies it. | Every tool. |
+
+Ask and Plan cannot edit a file or run a command that changes something. Review can run a test command but is structured as a review: findings come back through a review tool, not as a stream of edits. Build and Debug can change the project, so they are the modes that end with a proof card when files changed.
+
+### Custom modes
+
+A project can add its own modes as Markdown files under `.quaka/modes/`. The frontmatter names the mode and picks a base mode: Build, Ask, Plan, Review or Debug. The body is added to the run's instructions. A custom mode changes what the agent is told, not what the harness enforces: its tool set is the base mode's.
+
+## Tabs
+
+Threads open in tabs. A tab keeps its own scroll position, draft and model. The tab bar also holds **Run on N models**: with text in the message box, it sends the same prompt to several models at once, one thread per model. The threads run in parallel and you can compare the results.
+
+Tabs are a view, not a limit. Closing a tab does not delete the thread. It stays in the sidebar.
+
+## The inbox
+
+The inbox is the list of things blocked on you across all projects. It is not a feed of finished runs. It holds:
+
+- Every pending approval card or question, oldest first, because prompts time out.
+- Every thread that is blocked: a failed run, a disputed proof, a pull request that needs attention, or changes waiting in a copy.
+- New Linear issues, when Linear is connected.
+
+Each row opens the thread or answers the prompt in place. **Mark done** clears a thread at rest that still shows something. A run that simply finished is not in the inbox; it is in the sidebar with its status.
+
+## Side chats
+
+**Ask about this thread** opens a read-only side chat. It sees the parent thread's history and works in the parent's workspace, but it never writes into the parent. Use it to ask why a run made a choice, what a file does, or what to try next without adding noise to the main thread.
+
+A side chat is its own thread in the sidebar, grouped with its parent. It cannot edit files, run mutating commands or push.
+
+## Forks
+
+Any message has a **Fork from here** action. It creates a new thread with the conversation up to and including that message, on the provider and model the current thread is using. The original thread is unchanged. A fork is useful when a run went down the wrong path but the context before it is still good.
+
+A fork is a copy of the messages, not a copy of the working tree. It starts from the project as it is now.
+
+## Copies and worktrees
+
+A thread usually works in your checkout. Two situations change that.
+
+**Another thread is already writing.** If two threads would write to the same checkout, the second gets a git worktree: its own directory, its own branch, the same repository. Its changes stay there until you apply them or discard them.
+
+**The run started from someone else's text.** A run started from a GitHub issue, a pull request, a web page, or a message that links to an outside site works in a copy. The copy is a clone of the project. Routine edits and commands run there without a card. Pushes, pull requests and MCP calls wait until you review the result and apply it.
+
+The apply card shows the changed files and the held actions. Applying the files and running the held actions are separate decisions. You can apply the files and reject the push. Discarding the run removes the copy.
+
+A run can also be told to work in a copy for one send with the composer's **Work in a copy** switch, or for every run in Settings under **Containment**.
+
+## Pin, tag and search
+
+- **Pin** puts a thread at the top of the sidebar.
+- **Tags** are short labels, up to the thread's tag limit, shown in the header and searchable.
+- **Search** in the command palette finds threads by title and message text. The sidebar also filters as you type.
+
+## Importing history
+
+The command palette can import history from Claude Code or Codex. Quaka reads the sessions those tools stored on this machine and creates threads from them. An imported thread keeps the messages and the title, but not the project: it starts on your default provider and model, and its first send chooses the workspace, like a new thread.
+
+Importing is a one-time read. It does not change the other tool's data and it does not keep a link to it.
+
+## Limits
+
+- **A thread is one conversation.** A very long thread is summarized to fit the model's context. The summary can lose a detail the model would have needed.
+- **A mode is a tool set, not a guarantee.** Build can still make a bad change. Ask and Plan cannot write, but they can read anything the sandbox allows.
+- **A side chat is read-only.** It cannot fix the parent thread or change its files. It can only tell you what it sees.
+- **A fork copies messages, not state.** The working tree, the branch and any uncommitted changes are whatever the project has now.
+- **A worktree is still your repository.** It has its own branch and directory, but it shares the repository's objects and remotes. A push from it is a push.
+- **Importing depends on the other tool's format.** A session that the other tool changed or deleted may not import, and an imported thread cannot resume the other tool's live session.

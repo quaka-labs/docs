@@ -1,0 +1,58 @@
+---
+title: Install Quaka
+description: What Quaka needs, how an invite works, and what happens on the first launch.
+---
+
+Quaka is invite only. There is no download button on this site and no public build URL. When your invite arrives, it includes the build for your platform and the address to use. Join the waitlist on the [Welcome page](/docs#waitlist), or write to [hello@quaka.app](mailto:hello@quaka.app) if you need help with an invite.
+
+The product is not open source. This site is public so the documentation can be read, linked and indexed. The application, its source and its internals are not.
+
+## What you need
+
+| Platform | What Quaka needs | What the sandbox needs |
+| --- | --- | --- |
+| macOS | macOS 10.15 or later, Apple silicon or Intel | The built-in Seatbelt sandbox. Nothing to install. |
+| Windows | Windows 11 24H2 or 25H2 | The August 2026 update or later, which includes Microsoft Execution Containers. Build 26100.9278 or 26200.9278 and later. |
+| Linux | x86_64, on Ubuntu 22.04 or a distribution at least as recent | `bubblewrap`, and a kernel that lets a run create its own network namespace. |
+
+On Windows without the required build, Quaka still runs. Shell commands run unsandboxed, and the thread says so once per session. On Linux without `bubblewrap`, the same is true. The [Sandbox](/docs/security/sandbox) page explains what changes when the sandbox is not available.
+
+You also need:
+
+- A model to run. An API key for Anthropic, OpenAI or Gemini, an installed Claude Code or Codex login, a local Ollama or MLX server, or any OpenAI-compatible endpoint. You can skip this during onboarding and add it later.
+- A project folder. Quaka works on a folder, a git repository, or a git worktree. Git is optional, but many features, including diffs, branches, pull requests and Replay, need it.
+- A GitHub account if you want pull request watching, `@quaka` comments or the hosted team bot. The rest of the app works without GitHub.
+
+## What stays on your machine
+
+The agent, its tools and your project stay on your machine. The only thing that leaves is what the agent sends to the model provider you pick: the messages, the file contents it reads, the command output it includes, and the images or PDFs you attach. If you use a local model, that traffic stays on your machine too.
+
+API keys are stored in the operating system's keychain, not in the project. Project secrets are stored separately and are shown to the agent by name, never by value, unless a call that names one is approved.
+
+## Install
+
+1. Open the invite. It names the build for your platform.
+2. Install it the way your platform expects. On macOS, open the disk image and drag Quaka to Applications. On Windows, run the installer. On Linux, install the package or run the AppImage.
+3. Launch Quaka.
+
+The first launch opens the onboarding window. It has four steps: Welcome, Provider, API Key and Done. The [Quickstart](/docs/quickstart) walks through them.
+
+## Updates
+
+Quaka checks for updates from inside the app. The check is in the command palette as **Check for Updates**, and the result appears there. An update replaces the app; your threads, settings and keys stay where they are.
+
+There is no separate update command in this documentation. If an update fails, use [Help](/docs/help).
+
+## Uninstall
+
+Uninstalling the app removes the application. It does not remove your data. Threads, settings, logs and the local database live in the app's data folder, which the operating system keeps until you delete it yourself.
+
+If you want a clean removal, delete the app and then the app's data folder. The exact location depends on your platform. Removing the data folder deletes your threads and settings. It does not delete anything in your projects, and it does not revoke API keys at the provider.
+
+## Limits
+
+- **An invite is required.** There is no self-serve build, no public download and no waitlist bypass. The waitlist is the only public entry point.
+- **The sandbox depends on the operating system.** macOS and Linux have a working sandbox on the supported versions. Windows needs the specified build. Without a backend, commands run unsandboxed and the thread says so.
+- **Linux needs `bubblewrap` and network namespaces.** A distribution that blocks unprivileged user namespaces can prevent the sandbox from starting. Quaka reports that in the thread rather than pretending the command is contained.
+- **This page does not link to a build.** That is deliberate. A build shared outside the invite process is not supported.
+- **Uninstalling is not a remote wipe.** Your data stays on the machine until you delete it, and keys stay valid at the provider until you revoke them there.

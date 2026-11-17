@@ -1,0 +1,120 @@
+/* ---- Quaka in pixels, under a dithered night sky ----
+   The pixel character (components/pixel-quaka.tsx) and the live sky (components/night-sky.tsx).
+   Sprites scale by whole css pixels per art pixel (--px), and every motion below moves in whole
+   art pixels (steps), so the art never smears. The timings follow the app's Quaka keyframes. */
+
+.pixel-sprite {
+  --px: 8px;
+  display: block;
+  width: calc(var(--px) * var(--cols));
+  height: calc(var(--px) * var(--rows));
+  overflow: visible;
+}
+/* Quaka's avatar in the waitlist's reply (waitlist-form.tsx): two css pixels per art pixel. */
+.pixel-sprite.wl-face { --px: 2px; }
+
+/* Head: a one-pixel nod, ears that flick up on their own beat, the app's blink. */
+.qk-nod { animation: qk-nod 2.8s steps(1, end) infinite; }
+@keyframes qk-nod { 0% { transform: none; } 34% { transform: translateY(1px); } 64% { transform: none; } }
+.qk-ear-l, .qk-ear-r { animation: qk-ear 2.8s steps(1, end) infinite; }
+.qk-ear-r { animation-delay: 0.4s; }
+@keyframes qk-ear { 0% { transform: none; } 80% { transform: translateY(-1px); } 87% { transform: none; } }
+.qk-blink { opacity: 0; animation: qk-blink 3.6s steps(1, end) infinite; }
+@keyframes qk-blink { 0% { opacity: 0; } 93% { opacity: 1; } 97% { opacity: 0; } }
+
+/* Laptop: the screen's light flickers as it changes; work drifts up off the screen. */
+.qk-glow { animation: qk-glow 2.6s steps(1, end) infinite; }
+@keyframes qk-glow { 0% { opacity: 1; } 38% { opacity: 0.55; } 44% { opacity: 1; } 71% { opacity: 0.75; } 75% { opacity: 1; } }
+.qk-spark { opacity: 0; animation: qk-spark 2.4s steps(8, end) infinite; }
+/* One art pixel per step: 8 steps, 8 pixels. */
+@keyframes qk-spark { 0% { transform: none; opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-8px); opacity: 0; } }
+
+/* Invite: a one-pixel bob, a two-frame tail, a glint by the envelope. */
+.qk-bob { animation: qk-bob 1.4s steps(1, end) infinite; }
+@keyframes qk-bob { 0% { transform: none; } 35% { transform: translateY(-1px); } 70% { transform: none; } }
+.qk-tail-a { animation: qk-tail-a 1.4s steps(1, end) infinite; }
+.qk-tail-b { opacity: 0; animation: qk-tail-b 1.4s steps(1, end) infinite; }
+@keyframes qk-tail-a { 0% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes qk-tail-b { 0% { opacity: 0; } 50% { opacity: 1; } }
+.qk-glint { opacity: 0; animation: qk-glint 3.2s steps(1, end) infinite; }
+@keyframes qk-glint { 0% { opacity: 0; } 62% { opacity: 1; } 70% { opacity: 0; } }
+
+/* Asleep: slow breath, letters drifting up, the sleep light breathing. */
+.qk-breathe { animation: qk-breathe 3.6s steps(1, end) infinite; }
+@keyframes qk-breathe { 0% { transform: none; } 50% { transform: translateY(1px); } }
+.qk-z { opacity: 0; animation: qk-z 3.2s steps(6, end) infinite; }
+@keyframes qk-z { 0% { transform: none; opacity: 0; } 17% { opacity: 1; } 100% { transform: translateY(-6px); opacity: 0; } }
+.qk-led { animation: qk-led 3.6s ease-in-out infinite; }
+@keyframes qk-led { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-sprite * { animation: none !important; }
+  .qk-z { opacity: 0.85; }
+}
+
+/* ---- The sky ---- */
+.night-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.night-sky canvas {
+  display: block;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.night-sky[data-sky="on"] canvas { opacity: 1; }
+/* No WebGL: a still horizon glow and a faint star dust in its place. */
+.night-sky[data-sky="fallback"] {
+  background:
+    radial-gradient(60% 45% at 72% 100%, rgba(106, 43, 184, 0.32), transparent 70%),
+    radial-gradient(rgba(230, 230, 230, 0.10) 1px, transparent 1.5px) 0 0 / 9px 9px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .night-sky canvas { transition: none; }
+}
+
+/* The sprite's bottom row sits one art pixel into the ground. */
+.sky-anchor .pixel-sprite { margin-bottom: calc(var(--px) * -1); }
+
+/* ---- Invite ----
+   A framed panel with its own patch of sky: the ask on the left, Quaka with the invitation on the
+   right, standing on the panel's horizon. */
+.invite-panel {
+  border-radius: 16px;
+  border: 1px solid var(--color-ash);
+  background: var(--color-carbon-canvas);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 80px -40px rgba(0, 0, 0, 0.9);
+}
+.invite-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  row-gap: 40px;
+  padding: 40px 24px 0;
+  min-height: 520px;
+}
+.invite-stage { justify-self: center; align-self: end; padding-bottom: 72px; }
+.invite-stage .pixel-sprite { --px: 7px; }
+@media (min-width: 1024px) {
+  .invite-grid { grid-template-columns: minmax(0, 1fr) auto; column-gap: 48px; padding: 72px 72px 0; }
+  .invite-grid > [data-sky-quiet] { padding-bottom: 72px; }
+  .invite-stage { justify-self: end; margin-right: 6%; padding-bottom: 104px; }
+  .invite-stage .pixel-sprite { --px: 10px; }
+}
+
+/* ---- Footer ---- */
+.footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+.footer-grid > :first-child { grid-column: 1 / -1; }
+@media (min-width: 640px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .footer-grid { grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
+  .footer-grid > :first-child { grid-column: auto; }
+}
+.footer-link { font-family: var(--font-inter); font-size: 14px; color: var(--color-pewter); transition: color 0.15s ease; }
+.footer-link:hover { color: var(--color-paper); }
+.footer-link:focus-visible { outline: 2px solid var(--color-sand); outline-offset: 3px; border-radius: 2px; }

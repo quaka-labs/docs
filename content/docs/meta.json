@@ -1,0 +1,23 @@
+{
+  "title": "Docs",
+  "pages": [
+    "index",
+    "---Start here---",
+    "install",
+    "quickstart",
+    "---Using Quaka---",
+    "models",
+    "threads",
+    "workspace",
+    "automations",
+    "replay",
+    "memory",
+    "team-bot",
+    "security",
+    "---Reference---",
+    "settings",
+    "shortcuts",
+    "---Help---",
+    "help"
+  ]
+}

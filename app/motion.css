@@ -1,0 +1,41 @@
+/* ======================================================================
+   The site's one text motion: headlines resolve out of the dusk's dither
+   (components/text/dither-text.tsx). Each letter is the real letter; while
+   it waits, its ink is hidden and a block of ordered dither in the logo's
+   sunset colours stands in its place. Nothing moves, so nothing reflows.
+   ====================================================================== */
+
+.dt-w { white-space: nowrap; }
+.dt-c { position: relative; }
+
+/* 4x4 Bayer thresholds at 25, 50 and 75 percent, 2px dots. */
+.dt-c[data-l="1"] { --dt-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 0h2v2h-2zM4 0h2v2h-2zM0 4h2v2h-2zM4 4h2v2h-2z'/%3E%3C/svg%3E"); }
+.dt-c[data-l="2"] { --dt-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 0h2v2h-2zM4 0h2v2h-2zM2 2h2v2h-2zM6 2h2v2h-2zM0 4h2v2h-2zM4 4h2v2h-2zM2 6h2v2h-2zM6 6h2v2h-2z'/%3E%3C/svg%3E"); }
+.dt-c[data-l="3"] { --dt-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 0h2v2h-2zM2 0h2v2h-2zM4 0h2v2h-2zM6 0h2v2h-2zM2 2h2v2h-2zM6 2h2v2h-2zM0 4h2v2h-2zM2 4h2v2h-2zM4 4h2v2h-2zM6 4h2v2h-2zM2 6h2v2h-2zM6 6h2v2h-2z'/%3E%3C/svg%3E"); }
+.dt-c[data-k="0"] { --dt-colour: #f48a5a; }
+.dt-c[data-k="1"] { --dt-colour: #f0607a; }
+.dt-c[data-k="2"] { --dt-colour: #d04f9a; }
+.dt-c[data-k="3"] { --dt-colour: #9b5cf0; }
+
+/* Only once the script is running (dt-ready), so text never waits on a script that didn't load. */
+html.dt-ready .dt-reveal:not([data-done]) .dt-c:not([data-on]) { color: transparent; }
+html.dt-ready .dt-reveal:not([data-done]) .dt-c:not([data-on])::after,
+html.dt-ready .dt-wave[data-run]:not([data-done]) .dt-c[data-l]:not([data-on])::after {
+  content: "";
+  position: absolute;
+  inset: 0.2em 0.03em 0.1em;
+  background: var(--dt-colour, #f48a5a);
+  -webkit-mask: var(--dt-mask) 0 0 / 8px 8px repeat;
+  mask: var(--dt-mask) 0 0 / 8px 8px repeat;
+  pointer-events: none;
+}
+/* Before it plays, the waiting text is a dim dithered silhouette. */
+html.dt-ready .dt-reveal:not([data-run]) .dt-c::after { opacity: 0.3; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.dt-ready .dt .dt-c { color: inherit; }
+  html.dt-ready .dt .dt-c::after { content: none; }
+}
+
+/* Code that must read literally: JetBrains Mono's contextual alternates turn "<!--" into an arrow. */
+.literal { font-feature-settings: "calt" 0, "liga" 0; font-variant-ligatures: none; }

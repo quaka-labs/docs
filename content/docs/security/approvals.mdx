@@ -1,0 +1,97 @@
+---
+title: Approvals
+description: Where the harness stops and a person decides, what Smart approval lets through, and what always asks.
+layer: approval
+---
+
+The other four layers are enforced without you. The sandbox runs the command. The firewall sees the host. The taint marks the run. The proof checks the claim. Approvals is the layer that asks a person.
+
+It is also the layer most likely to be wrong, because a person can be tired, curious, or in a hurry. Quaka's job is to ask at the right moments, show enough to decide, and never pretend a click is a proof.
+
+## The default
+
+Approvals is set to **Smart**. On the desktop, before a run has read anything untrusted:
+
+- File edits inside the project run without a card.
+- A `bash` command runs without a card when the OS sandbox confines its writes to the project, the command does not reach the network (a package install that fetches dependencies is the exception), and it does not push.
+- Read-only commands run without a card.
+- A saved bash rule can cover a mutating command it names.
+- Everything else asks.
+
+"Everything else" includes anything that leaves the project, anything the command classifier flags as destructive or credential-reading, anything that names a project secret, a write to `.quaka/` or `.git/`, an MCP call, a pull request, a push, and a browser navigation to a host the run has not opened yet.
+
+## The three modes
+
+| Mode | What runs without a card | What asks |
+| --- | --- | --- |
+| Smart | Edits in the project, contained commands that stay on the machine, read-only commands, saved rules. | Flags, network, pushes, pull requests, MCP calls, anything outside the project. |
+| Always ask | Read-only commands. | Every side-effecting call. |
+| Auto | What Smart allows, plus calls the reviewer approves under your review policy. | Flags, and anything the reviewer does not approve. |
+
+Auto is not "allow everything". It adds a reviewer model to Smart. The reviewer reads the call against your policy and can approve it without a card. A flagged call still reaches you, and a tainted run still asks, because a reviewer cannot approve a side effect in a tainted run.
+
+## What always asks
+
+Some calls are outside every shortcut. No saved rule, automation grant, reviewer, or bridge permission can approve them:
+
+- a destructive command
+- a command that reads a credential
+- a command that names one of the project's secrets
+- a write to `.quaka/` or `.git/`
+- `run_mcp_script`, the tool that lets the agent write a short program over MCP results
+- a browser navigation to a non-web URL
+- a side effect in a run that read untrusted content
+- a side effect in a remote or unattended run, where nobody can be asked
+
+The last two are not a judgment about the command. They are a statement about the run: the harness cannot verify who is watching, or what text is steering it, so it does not let a shortcut stand in for a person.
+
+## What the card shows
+
+A card names the action, shows the command or the change, and gives the reason it is asking. The reason can be a flag such as "destructive", a taint such as "this run read untrusted content: a web page at step 3", or both. The card also shows the project secret's name, never its value.
+
+For a `bash` command, the command is editable before you allow it. That is useful when the intent is right and the exact command is not. The edited command is what runs.
+
+While focus is in the card:
+
+- **Enter** allows.
+- **Escape** rejects.
+- **Shift+Enter** inserts a newline in the command instead of allowing.
+- A focused button or the Details control does its own thing.
+
+The card is an alert dialog. It does not disappear because you clicked elsewhere.
+
+## What you see
+
+The card below is the end of an undoable run: the files it changed in its copy, and the actions it held back because they would leave the machine.
+
+<Figure backdrop="desktop" moment="Waiting for you" caption="The run changed two files in its copy. The push and the pull request wait, in order, until you apply the files.">
+  <ApplyFragment />
+</Figure>
+
+Applying the files and running the held actions are separate decisions. You can apply the changes and reject the push. You can discard the whole run. The card does not bundle a network action into a file edit.
+
+## Rules and policy
+
+A saved rule is a bash command pattern you approved before. Rules are checked after the flags: a rule can cover a mutating command, but never a destructive command or a credential read. A repository can also provide rules in `.quaka/rules.json`; they apply only after you trust the repository.
+
+A review policy is a short text file, `.quaka/policy.md`, or a policy in Settings. It tells the reviewer what your project considers acceptable. In Smart and Auto, the policy can make a call ask; it cannot make a flagged call run. In Auto, the reviewer can approve an unflagged call that fits the policy.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| When to ask | Smart | Smart, Always ask, or Auto. |
+| Review policy | Empty | The text the reviewer uses in Auto, and the policy that can make Smart ask. |
+| Work in a copy after someone else's text | On | A tainted run works in a copy, so routine work in the copy runs and only what leaves it waits. |
+| Verify before done | Block | Proof can send a failed check back to the agent, which may produce more calls to approve. |
+
+## Limits
+
+- **A person can be wrong.** The card shows the command and the reason. It does not show the command's full effect on your machine, the state of the remote, or what a script will do after it downloads. Approving is a judgment.
+- **Smart is a heuristic.** The command classifier and the containment check are code with rules, not a proof of safety. A command can be classified as mutating and still do something you did not expect.
+- **Auto adds a model to the loop.** The reviewer can be wrong, and it can be persuaded by the same context that persuaded the agent. It is off by default. Use it when the policy is tight and the work is repetitive.
+- **A tainted run always asks.** That is deliberate. It also means a long tainted run can produce many cards. The copy is what keeps the routine work out of them.
+- **Remote and unattended runs cannot ask.** They block instead. An automation gets exactly what its grant approves, never the desktop's shortcuts, and never past a flag.
+- **Rules are patterns.** A rule that is too broad can cover a command you did not intend. A rule never covers a destructive command or a credential read, but it can still cover a command that changes more than you expected.
+- **The card is not a sandbox.** It is a decision point. The sandbox, the firewall, the taint and the proof are what make the decision smaller.
+- **The final click is yours.** No layer can make a person read. If you approve without reading, the harness has done its job and you have not.

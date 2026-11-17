@@ -1,0 +1,167 @@
+---
+title: Settings
+description: Every section of the Settings window, what it starts as, and the complete stored reference.
+---
+
+Settings is one window with a list on the left and one section at a time on the right. Open it with `Cmd ,` on macOS or `Ctrl ,` elsewhere, or from the command palette.
+
+The window is also where the app's stored settings live. Most sections have a few controls; the complete list of stored keys, defaults and scopes is at the end of this page.
+
+## The default
+
+A new install starts with:
+
+- **No model** until onboarding finishes. After that, new threads use the provider you picked.
+- **Smart approvals**, the OS sandbox on, sandboxed commands allowed on the network, and Docker off.
+- **Verify before done** set to Block, with two retries.
+- **Memory** on, and no other memory store.
+- **Sync** off, **GitHub** signed out, **Linear** not set up, and the **team bot** off.
+- **Appearance** on the dark theme, at 100% zoom, with no background media.
+
+The sections below describe what each one changes. The reference lists every stored setting, including ones the app writes without a control.
+
+## Providers and secrets
+
+This section has three tabs.
+
+**Providers** lists the built-in providers, your custom OpenAI-compatible providers, local Ollama and MLX servers, and ACP agents. A provider row shows whether a key is saved, lets you save or replace one, and can fetch the provider's model list. A custom provider needs a name, a base URL and a model list. The default provider is the one new threads start on.
+
+**API keys** is the place to paste a key for any configured provider. Keys go to the operating system's keychain and are never shown again. Saving a key refreshes the model lists for every configured provider. Removing a key removes it from the keychain; it does not revoke it at the provider.
+
+**Project secrets** belongs to the open project. A secret is a name and a value, stored in the keychain. Agent commands and the terminal receive the secrets as environment variables. The agent is told the names, never the values, and a command that names one always asks. Tool output is masked as `[secret:NAME]` before the model, the journal or a bridge sees it. A value shorter than eight characters is not masked, because it collides with ordinary text too often.
+
+The masking catches accidents, not a determined command. A program that transforms a value before printing it can get it through, and any command the agent runs can use the secret. Treat a project secret as available to the agent, not hidden from it.
+
+## Claude Code and Codex
+
+This section shows whether Claude Code and Codex are installed, their versions, and the subscription accounts saved for each. The order of accounts is the order Quaka tries them.
+
+Two settings matter here:
+
+- **Sandbox Claude Code** and **Sandbox Codex** run the CLI's own process inside the sandbox and under the firewall, and route the calls it would ask about through Quaka's approval card. Both are on.
+- **Switch accounts when one runs out** continues on the next saved account when one subscription runs out mid-work. It is on.
+
+A CLI provider uses your existing login and needs no API key. Its own loop, context handling and model choice remain its own.
+
+## Harness
+
+The Harness section has four tabs: Safety, Models & spend, Tools, Chat & alerts. It is the largest part of Settings.
+
+### Safety
+
+**Containment** holds the sandbox switches: sandbox on or off, network for sandboxed commands, Docker socket access, air-gapped mode, and the two copy settings. The defaults are sandbox on, network on, Docker off, air-gapped off, and both copy settings on.
+
+**Approvals** holds the mode (Smart, Always ask or Auto) and the review policy. Smart is the default. The policy is text the reviewer uses in Auto, and a policy that can make Smart ask.
+
+**Verification** holds what a Build or Debug run must show before it can call itself done: Off, Report or Block. Block is the default. It also holds the retry count, the check's time limit and strict new tests.
+
+**Second opinion** holds the model from another lab, and whether it reads done claims and review findings. It is off until a model is picked.
+
+### Models & spend
+
+**Threads** holds reasoning effort, the whole-context switch and the summary tier. The defaults are the model's own effort, whole context on, and summaries at the Flex tier.
+
+**Helper models** holds the small model for side jobs, the model that describes images, and the decision layer. All three are unset or off by default; unset means the thread's model, and for images, the small model or Claude Haiku when an Anthropic key is saved.
+
+**Spend** holds the daily cap and price overrides. The cap is off (0) by default. Prices let the cap count models Quaka has no built-in price for.
+
+### Tools
+
+**Browser and MCP** holds your own browser, on-demand MCP tools, MCP scripts and read-only MCP servers. Your own browser and MCP scripts are off. Loading MCP tools on demand is on.
+
+**Subagents** holds how many read-only explore subtasks run at once and how many writers run at once.
+
+**Instructions and attachments** holds whether the personal Claude Code and Codex instruction files are read, and whether attachments are uploaded once. Both personal files are off, so another tool's file is not read without asking. Uploading once is on.
+
+**ACP agents** holds the launch command, arguments and environment for each ACP agent.
+
+### Chat & alerts
+
+**Chat box** holds what Enter does while a run is going (steer or queue) and the dictation model.
+
+**Notifications** holds banners, spoken status, when to speak, the voice and the volume. Banners are on for threads you cannot see; speech is off.
+
+## Skills
+
+Skills are folders of instructions the agent loads when a task matches. A project can have skills in `.quaka/skills`, `.claude/skills` or `.agents/skills`. Personal skills live in `~/.quaka/skills`, `~/.agents/skills` or `~/.claude/skills`. A project skill with the same name replaces a personal one.
+
+A skill is a folder whose `SKILL.md` starts with a `name` and a `description`. The list the agent sees is capped at 8,000 characters; past that, descriptions are shortened first.
+
+## Memory
+
+Memory holds the notes every thread gets, the notes waiting for approval, and the other memory stores. Memory is on by default. The notes stay on this computer unless you turn on a store. The [Memory](/docs/memory) page explains the rest.
+
+## Sync
+
+Sync carries threads, notes and choices between your devices. It is off until you turn it on.
+
+- **Sign in** with GitHub or Google on Quaka's relay, or set up a self-hosted relay by invite.
+- **A recovery code** is shown once. Without it, losing every device loses what synced.
+- **Devices** are listed, and a new device shows up on the others.
+- **Projects** lets each device choose which synced rules and notes apply to a folder.
+
+On Quaka's relay, the relay holds the keys, so it can read what you sync. On a self-hosted relay set up by invite, only your devices hold the keys. API keys, folder paths, automations and chat bridges never sync.
+
+## Appearance
+
+Appearance holds the theme, the zoom level and the background. A background image, GIF or video takes over the palette, so the theme choices are disabled while one is set. The dither effect applies to a still image. Zoom is 100% by default.
+
+## GitHub
+
+GitHub holds the sign-in, the clone directory, the GitHub App, pull request watching and `@quaka` commands. The token is stored in the keychain with `repo` and `read:user` scopes.
+
+- **Watch pull requests** is on. It watches your pull requests for failing checks and review comments.
+- **CI fix attempts** defaults to 3.
+- **Undoable fixes and replies** is on, so a fix or reply runs in a copy and its push waits for one apply.
+- **`@quaka` commands** is set per repository, and needs a signed-in account.
+
+## Linear
+
+Linear connects a personal API key. New issues that match your filter wait in the inbox. The filter is **Assigned to me** or **With a label**, open issues only. A pull request from an issue's thread says `Fixes ENG-123`, and Quaka comments the plan and the pull request link on the issue.
+
+Quaka asks Linear about once a minute from this machine, so new issues arrive only while Quaka runs.
+
+## Code review
+
+Code review holds the reviewer, the severity threshold and automatic reviews.
+
+- **Reviewer** is **Same as new threads** by default, or its own model.
+- **Severity to post** is **Medium and high** by default. Later reviews of the same pull request post only high severity; the rest stays in Quaka.
+- **Automatic reviews** is per repository: Off, Once per PR or Every push. You can include pull requests other people opened; reviews post as you.
+
+Review rules come from `REVIEW.md`, the `## Code Review Rules` section of `AGENTS.md`, `.quaka/review.md` and nested `AGENTS.md` files, read from the pull request's base. Lockfiles and generated or vendored code are skipped.
+
+## Integrations
+
+Integrations holds the hosted team bot and your own Discord, Telegram or Slack bot. The hosted bot is off until you sign in and create or join a team. Your own bot is off until you paste its token. The [Team bot](/docs/team-bot) page explains both.
+
+## About
+
+About shows the version, checks for updates, and installs one. An update replaces the app; threads, settings and keys stay.
+
+## The reference
+
+The table below is generated from the app's settings registry. It lists every stored setting, its default, its values and whether device sync carries it. A setting marked **This device** stays on the machine where it was set.
+
+<SettingsReference />
+
+## Where this comes from
+
+`content/generated/settings.json` is committed so the docs build never needs the app. `scripts/docs/settings-meta.mjs` supplies the public label, summary and group for each key. `scripts/docs/gen-settings.mjs` reads the app's settings registry, checks that every key has a row, and writes the JSON. If a key is added, removed or changed without a matching row, generation fails.
+
+To regenerate, a maintainer runs this from an app checkout:
+
+```bash
+QUAKA_SOURCE=/path/to/app npm run docs:gen
+```
+
+The app is not open source. Regeneration is a maintainer step, not something a reader needs to do.
+
+## Limits
+
+- **The reference is a snapshot.** It is generated from one app version. A later version can add, remove or rename a key before this page is regenerated.
+- **A stored key is not always a visible control.** Some settings are written by the app itself, such as learned context windows. They are listed because they are stored, not because you can edit them in the window.
+- **A setting can be device-only.** A synced setting reaches your other devices. A device setting stays where it was set, which is deliberate for paths, hardware and per-machine safety choices.
+- **Defaults are not recommendations.** Smart approvals, a sandbox with network and Block verification are the defaults because they fit most work. A repository you do not trust needs stricter choices.
+- **A key in the keychain is still a key.** Quaka does not show it again, but any process with your user access can read the keychain item. Removing it in Quaka does not revoke it at the provider.
+- **Settings do not override the harness.** Turning the sandbox off does not turn off the taint, the firewall's records or the proof. Those are separate layers.

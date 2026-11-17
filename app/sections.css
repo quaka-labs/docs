@@ -1,0 +1,707 @@
+/* ======================================================================
+   The story after the demo: five sections, each one thing only Quaka does,
+   shown with the app's own UI. Left-aligned on the page grid, serif to read,
+   the app's sans and mono only inside the replicas.
+   ====================================================================== */
+
+.sec {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--spacing-24);
+}
+.sec + .sec { margin-top: var(--seam-gap); }
+:root { --seam-gap: clamp(112px, 14vw, 184px); }
+
+/* ---- The sandbox frame ----
+   The story sections sit inside a frame drawn on the page grid: hairline rails at its edges, faint
+   hatching in the margins outside them, and between sections a hairline across the whole page with a
+   crosshair where it meets each rail. */
+.frame { position: relative; }
+.frame .sec { position: relative; }
+.frame .sec + .sec::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--seam-gap) / -2);
+  left: -100vw;
+  right: -100vw;
+  height: 1px;
+  background: var(--color-ash);
+  pointer-events: none;
+}
+@media (min-width: 900px) {
+  /* The rails, unbroken, on the page grid's edges. */
+  .frame {
+    --rail: calc((100% - min(var(--page-max-width), 100%)) / 2);
+    background:
+      linear-gradient(var(--color-ash), var(--color-ash)) var(--rail) 0 / 1px 100% no-repeat,
+      linear-gradient(var(--color-ash), var(--color-ash)) calc(100% - var(--rail)) 0 / 1px 100% no-repeat;
+  }
+  /* The margins outside the rails, hatched like a technical drawing's: faint enough to feel rather
+     than see. The hatch is fixed to the screen, so it never slides while the page scrolls (the five
+     layers stay pinned and so does this), and it fades in and out at the frame's two ends. */
+  .frame::before, .frame::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--rail);
+    pointer-events: none;
+    background:
+      linear-gradient(to bottom, var(--color-carbon-canvas), transparent 220px, transparent calc(100% - 220px), var(--color-carbon-canvas)),
+      repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 9px) fixed;
+  }
+  .frame::before { left: 0; }
+  .frame::after { right: 0; }
+  /* A crosshair where a seam crosses each rail. */
+  .frame .sec + .sec::after {
+    content: "";
+    position: absolute;
+    top: calc(var(--seam-gap) / -2 - 7px);
+    left: -7px;
+    right: -7px;
+    height: 15px;
+    pointer-events: none;
+    --x: var(--color-pewter);
+    background:
+      linear-gradient(var(--x), var(--x)) 7px 0 / 1px 15px no-repeat,
+      linear-gradient(var(--x), var(--x)) 0 7px / 15px 1px no-repeat,
+      linear-gradient(var(--x), var(--x)) right 7px top 0 / 1px 15px no-repeat,
+      linear-gradient(var(--x), var(--x)) right 0 top 7px / 15px 1px no-repeat;
+  }
+}
+
+/* ---- Dither marks (dither-marks.tsx) ----
+   A few small, still accents on the frame, wide screens only: a colour bar on two seams beside the
+   crosshair (one dithered square per safety layer), and a little dusk light in two sections'
+   top-right corners. Nothing moves and nothing repeats across the page. */
+.dm-bar, .dm-corner { display: none; }
+@media (min-width: 900px) {
+  .dm-bar {
+    position: absolute;
+    top: calc(var(--seam-gap) / -2 - 4px);
+    display: flex;
+    gap: 3px;
+    pointer-events: none;
+  }
+  .dm-bar.is-left { left: 22px; }
+  .dm-bar.is-right { right: 22px; }
+  .dm-bar i {
+    display: block;
+    width: 9px;
+    height: 9px;
+    background: repeating-conic-gradient(var(--c) 0 25%, transparent 0 50%) 0 0 / 2px 2px;
+    image-rendering: pixelated;
+  }
+  .dm-corner {
+    position: absolute;
+    top: calc(var(--seam-gap) / -2 + 1px);
+    right: 0;
+    display: block;
+    width: 224px;
+    height: 112px;
+    background: url(/dither/corner.png) 0 0 / 224px 112px no-repeat;
+    image-rendering: pixelated;
+    transform: scaleX(-1);
+    opacity: 0.85;
+    pointer-events: none;
+  }
+}
+
+/* A heading's second clause, at the same size in grey: it carries what a paragraph would. */
+.sec-title-rest { color: var(--color-pewter); }
+
+.sec-head { max-width: 760px; }
+.sec-title {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 5.2vw, 64px);
+  line-height: 1.03;
+  letter-spacing: -0.026em;
+  font-weight: 400;
+  color: var(--color-paper);
+  text-wrap: balance;
+}
+.sec-deck {
+  margin-top: 22px;
+  max-width: 36em;
+  font-family: var(--font-serif);
+  font-size: clamp(18px, 1.55vw, 20px);
+  line-height: 1.55;
+  color: var(--color-chalk);
+  text-wrap: pretty;
+}
+.sec-code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 0 0.3em;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-paper);
+}
+
+/* Product UI sits on a darker stage, whole and never cropped. */
+.sec-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  padding: 28px;
+  border: 1px solid var(--color-ash);
+  border-radius: 14px;
+  background: #0c0c0d;
+  overflow: hidden;
+}
+@media (max-width: 639px) {
+  .sec-stage { padding: 14px; }
+  .sec-stage > * { zoom: 0.86; }
+}
+
+/* ---- 1. The run, layer by layer ---- */
+
+.run, .hx-panels { margin-top: clamp(56px, 7vw, 88px); display: flex; flex-direction: column; }
+.run-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 24px;
+  padding-bottom: clamp(56px, 7vw, 96px);
+}
+.run-row:last-child { padding-bottom: 0; }
+/* The rail spans the whole row, padding included, so the run reads as one line down the section. */
+.run-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 20px; display: flex; justify-content: center; }
+.run-rail::before,
+.run-rail-fill {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 0;
+  width: 2px;
+  border-radius: 2px;
+}
+.run-row:last-child .run-rail::before, .run-row:last-child .run-rail-fill { bottom: 0; }
+.run-row:last-child .run-rail { bottom: 0; }
+.run-rail::before { background: color-mix(in srgb, var(--layer) 18%, transparent); }
+.run-rail-fill { background: var(--layer); box-shadow: 0 0 12px color-mix(in srgb, var(--layer) 55%, transparent); transform-origin: top; }
+.run-text { grid-column: 2; max-width: 34em; }
+.run-ui { grid-column: 2; }
+.run-ui::before {
+  content: "";
+  position: absolute;
+  inset: auto -20% -60% auto;
+  width: 70%;
+  height: 90%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--layer) 14%, transparent), transparent);
+  pointer-events: none;
+}
+.run-ui > * { position: relative; }
+
+.run-layer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-inter);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--layer);
+}
+/* The dot sits on the rail: the rail column is 20px wide with a 16px gap, so -26px from the text. */
+.run-dot {
+  position: relative;
+  margin-left: -31px;
+  margin-right: 11px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--layer);
+  box-shadow: 0 0 0 4px var(--color-carbon-canvas), 0 0 14px color-mix(in srgb, var(--layer) 70%, transparent);
+}
+.run-title {
+  margin-top: 14px;
+  font-family: var(--font-serif);
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  font-weight: 400;
+  color: var(--color-paper);
+  text-wrap: balance;
+}
+.run-body { margin-top: 14px; font-size: 17px; line-height: 1.62; color: var(--color-chalk); text-wrap: pretty; }
+.run-limits {
+  margin-top: 16px;
+  padding-left: 12px;
+  border-left: 1px solid var(--color-ash);
+  font-family: var(--font-inter);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-pewter);
+  text-wrap: pretty;
+}
+
+@media (min-width: 1024px) {
+  .run-row {
+    grid-template-columns: 20px minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: 40px;
+    padding-bottom: 104px;
+  }
+  .run-text { grid-column: 2; padding-top: 2px; }
+  .run-ui { grid-column: 3; }
+  .run-dot { margin-left: -55px; margin-right: 35px; }
+}
+
+/* ---- Shared second-level type ---- */
+.sec-sub {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 2.3vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+  color: var(--color-paper);
+  text-wrap: balance;
+}
+.sec-body { margin-top: 14px; font-size: 17px; line-height: 1.62; color: var(--color-chalk); text-wrap: pretty; }
+
+/* ---- 2. Any model, any plan ---- */
+
+.models { margin-top: clamp(48px, 6vw, 72px); display: grid; gap: 24px; }
+.models-menu { padding-block: 36px; }
+.models-sources { display: flex; flex-direction: column; }
+.src { padding: 22px 0; border-top: 1px solid var(--color-ash); }
+.src:last-child { border-bottom: 1px solid var(--color-ash); }
+.src-name { font-family: var(--font-serif); font-size: 22px; line-height: 1.2; color: var(--color-paper); }
+.src-body { margin-top: 8px; max-width: 36em; font-size: 16px; line-height: 1.62; color: var(--color-chalk); text-wrap: pretty; }
+@media (min-width: 1024px) {
+  .models { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+}
+
+.replay { margin-top: clamp(64px, 8vw, 104px); display: grid; gap: 28px; }
+.replay-text { max-width: 40em; }
+/* Replay's results sit on their own backdrop (public/replay-bg.webp, scripts/make-crt-bg.py). */
+.replay-ui { padding: 32px; background: url(/replay-bg.webp) center / cover no-repeat, #0c0c0d; }
+@media (max-width: 639px) { .replay-ui { padding: 12px; } }
+
+/* ---- 3. One memory ---- */
+
+.mem { margin-top: clamp(48px, 6vw, 72px); display: grid; gap: 28px; }
+/* The memory window sits on its own backdrop (public/memory-bg.webp, scripts/make-crt-bg.py). */
+.mem-window { padding-block: 36px; background: url(/memory-bg.webp) center / cover no-repeat, #0c0c0d; }
+.mem-side { display: grid; gap: 28px; }
+.mem-callout { padding-top: 16px; border-top: 1px solid var(--color-ash); }
+.mem-callout-title { font-family: var(--font-serif); font-size: 21px; line-height: 1.2; color: var(--color-paper); }
+.mem-callout-body { margin-top: 8px; font-size: 15.5px; line-height: 1.6; color: var(--color-chalk); text-wrap: pretty; }
+/* Narrower: the window first, its notes after it. */
+@media (max-width: 1099px) {
+  .mem-window { order: -1; }
+}
+@media (min-width: 640px) and (max-width: 1099px) {
+  .mem { grid-template-columns: 1fr 1fr; }
+  .mem-window { grid-column: 1 / -1; }
+}
+/* Wide: the window in the middle, each note beside the part of it that it's about. */
+@media (min-width: 1100px) {
+  .mem { grid-template-columns: minmax(0, 1fr) 600px minmax(0, 1fr); gap: 0; align-items: stretch; }
+  .mem-side { position: relative; display: block; }
+  .mem-callout { position: absolute; top: var(--at); left: 0; right: 0; padding-top: 0; border-top: 0; }
+  .mem-callout.is-left { padding-right: 36px; text-align: right; }
+  .mem-callout.is-right { padding-left: 36px; }
+  /* A leader from the note to the window's edge. */
+  .mem-callout::after { content: ""; position: absolute; top: 12px; width: 28px; height: 1px; background: var(--color-slate); }
+  .mem-callout.is-left::after { right: 0; }
+  .mem-callout.is-right::after { left: 0; }
+}
+
+/* ---- 4. Where your team works ---- */
+
+.team { margin-top: clamp(48px, 6vw, 72px); display: grid; gap: 28px; }
+.team-outside { display: grid; gap: 28px; }
+.team-surface { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.team-where { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-inter); font-size: 13px; font-weight: 500; color: var(--color-pewter); }
+.team-logo { width: 16px; height: 16px; flex: none; }
+.team-stage { flex: 1; }
+.team-stage.is-github { background: #010409; }
+/* Slack's workspace sits on its own backdrop (public/desktop-bg.webp). */
+.team-stage.is-slack { background: url(/desktop-bg.webp) center / cover no-repeat, #0c0c0d; }
+/* Quaka's side is a MacBook cut off at the desk (quaka-mac.tsx). Sizes are in its design pixels: the
+   layers they sit in are zoomed to the stage's width. The cut is a hairline across the whole stage. */
+.mac-stage { border-bottom: 1px solid var(--color-ash); }
+.mac-lid {
+  border-radius: 40px 40px 0 0;
+  background: #050506;
+  box-shadow:
+    inset 0 0 0 2px #3a3b41,
+    inset 0 2px 0 2px #4a4b52,
+    inset 0 0 0 4px #0b0b0d,
+    0 -1px 0 1px rgba(255, 255, 255, 0.03);
+}
+.mac-menubar {
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.2));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+/* The camera housing, as tall as the menu bar, with the camera in it. */
+.mac-notch { border-radius: 0 0 14px 14px; background: #050506; }
+.mac-notch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #3a4566, #10131d 60%);
+  box-shadow: 0 0 0 2px #0e0f13;
+}
+@media (min-width: 1024px) {
+  .team { gap: 32px; }
+  /* Slack shows its workspace, so it gets the wider column. */
+  .team-outside { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 32px; }
+}
+
+.places { margin-top: clamp(48px, 6vw, 72px); display: grid; column-gap: 56px; }
+.place { padding: 22px 0; border-top: 1px solid var(--color-ash); }
+.place-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-family: var(--font-serif); font-size: 22px; line-height: 1.2; color: var(--color-paper); }
+.place-logos { display: inline-flex; align-items: center; gap: 8px; }
+.place-logos svg { width: 20px; height: 20px; flex: none; }
+.place-logos .place-icon { color: var(--color-pewter); }
+.place-body { margin-top: 8px; max-width: 36em; font-size: 16px; line-height: 1.62; color: var(--color-chalk); text-wrap: pretty; }
+@media (min-width: 900px) { .places { grid-template-columns: 1fr 1fr; } }
+
+/* ---- 5. Your machine ---- */
+
+.where { margin-top: clamp(48px, 6vw, 72px); display: grid; gap: 0; border-top: 1px solid var(--color-ash); }
+.where-col { padding: 28px 0; border-bottom: 1px solid var(--color-ash); }
+.where-title { font-family: var(--font-serif); font-size: 22px; line-height: 1.2; color: var(--color-paper); }
+.where-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.where-list li { position: relative; padding-left: 18px; font-size: 16px; line-height: 1.5; color: var(--color-chalk); }
+.where-list li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; background: var(--color-slate); }
+.where-col:first-child .where-list li::before { background: #f48a5a; }
+.where-col:nth-child(2) .where-list li::before { background: #8a93ff; }
+.where-none { margin-top: 16px; font-size: 16px; line-height: 1.5; color: var(--color-chalk); }
+.where-note { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--color-pewter); max-width: 38ch; }
+.where-sleep { margin-top: 28px; display: flex; justify-content: center; }
+.where-sleep .pixel-sprite { --px: 5px; }
+@media (min-width: 900px) {
+  .where { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--color-ash); }
+  .where-col { padding: 32px 32px 40px; border-bottom: 0; border-left: 1px solid var(--color-ash); }
+  .where-col:first-child { padding-left: 0; border-left: 0; }
+  .where-col.is-empty { display: flex; flex-direction: column; background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(255, 255, 255, 0.018) 10px 11px); }
+  .where-sleep { margin-top: auto; padding-top: 28px; }
+}
+
+.airgap { margin-top: clamp(64px, 8vw, 96px); display: grid; gap: 28px; }
+.airgap-text { max-width: 34em; }
+/* The air-gap switches sit on their own backdrop (public/airgap-bg.webp, scripts/make-crt-bg.py). */
+.airgap-ui { background: url(/airgap-bg.webp) center / cover no-repeat, #0c0c0d; }
+@media (min-width: 1024px) {
+  .airgap { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+}
+
+/* ---- 1, pinned: the harness plays one run as you scroll ----
+   Left: the rings (a narrower sun than the hero's), the five layers as steps, and the layer's text.
+   Right: the app's card for that moment, with the full height to itself. Each layer gets 1.1
+   viewports of scroll and a gentle snap point; the last one holds for 0.7 of a viewport before the
+   page moves on. Every motion is a transform or opacity, started by the step the scroll position
+   picks (harness-scene.tsx), never scrubbed frame by frame. */
+
+.hx-stage-wrap, .hx-steps, .hx-snap { display: none; }
+
+@media (min-width: 1024px) and (min-height: 680px) and (prefers-reduced-motion: no-preference) {
+  html { scroll-snap-type: y proximity; }
+  .hx { position: relative; height: calc((1 + 0.5 + 5 * 1.1 + 0.7) * 100svh); margin-top: 8px; }
+  .hx-snap { display: block; position: absolute; left: 0; width: 1px; height: 1px; top: calc((0.5 + var(--k) * 1.1 + 0.1) * 100svh); scroll-snap-align: start; }
+  .hx-pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-content: center;
+    column-gap: 48px;
+    row-gap: 16px;
+    padding-block: 20px;
+  }
+  .hx-stage-wrap { display: flex; justify-content: center; grid-column: 1; grid-row: 1; }
+  .hx-steps { display: block; grid-column: 1; grid-row: 2; }
+  .hx-panels, .hx-panel { display: contents; }
+  .hx-panel .run-rail { display: none; }
+  .hx-panel .run-text, .hx-panel .run-ui {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease), transform 0.5s var(--ease);
+  }
+  .hx-panel[data-current] .run-text, .hx-panel[data-current] .run-ui { opacity: 1; transform: none; pointer-events: auto; transition-delay: 0.08s; }
+  .hx-panel .run-text { grid-column: 1; grid-row: 3; align-self: start; max-width: none; }
+  .hx-panel .run-ui { grid-column: 2; grid-row: 1 / 4; align-self: center; padding: 20px; }
+  .hx-panel .run-dot { margin-left: 0; margin-right: 0; }
+  /* The steps under the rings already name the layer and how far the run is. */
+  .hx-panel .run-layer { display: none; }
+  .hx-panel .run-title { margin-top: 0; font-size: clamp(24px, 2.2vw, 30px); }
+  .hx-panel .run-body { margin-top: 8px; font-size: 15.5px; line-height: 1.55; }
+  .hx-panel .run-limits { margin-top: 10px; font-size: 12.5px; }
+}
+@media (min-width: 1024px) and (min-height: 680px) and (max-height: 860px) and (prefers-reduced-motion: no-preference) {
+  .hx-stage-wrap .hx-stage { zoom: 0.66; }
+  .hx-panel .sec-stage > * { zoom: 0.86; }
+  .hx-pin { row-gap: 12px; }
+}
+
+.hx-stage { position: relative; width: calc(var(--w) * 1px); height: calc(var(--h) * 1px); zoom: 0.78; }
+.hx-stage::after {
+  content: "";
+  position: absolute;
+  left: -80px;
+  right: -80px;
+  bottom: 17px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(244, 138, 90, 0.3) 25%, #ffc49a 50%, rgba(244, 138, 90, 0.3) 75%, transparent);
+}
+.hx-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 720px;
+  height: 300px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(244, 138, 90, 0.2) 0%, rgba(233, 44, 68, 0.08) 34%, rgba(124, 41, 204, 0.04) 62%, transparent 92%);
+}
+.hx-glow { position: absolute; left: 50%; bottom: 18px; width: 900px; height: 102px; max-width: none; transform: translateX(-50%); opacity: 0.5; }
+.hx-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+/* Rings: barely there until their layer comes up; the current one bright, with one flash as it catches. */
+.hx-ring { --d: 0.6s; }
+.hx-ring[data-guard] { --d: 0.68s; }
+.hx-line { fill: none; stroke-width: 1.5; stroke-dasharray: 3 7; opacity: 0.13; transition: opacity 0.4s var(--ease); }
+.hx-bright { fill: none; stroke-width: 3; opacity: 0; transition: opacity 0.4s var(--ease); }
+.hx-halo { fill: none; stroke-width: 22; opacity: 0; transition: opacity 0.5s var(--ease); }
+.hx-flash { fill: none; stroke-width: 36; opacity: 0; }
+.hx-hit { fill: none; stroke-width: 7; stroke-linecap: round; opacity: 0; transition: opacity 0.3s var(--ease); }
+.hx-ring[data-lit] .hx-line { opacity: 0.45; }
+.hx-ring[data-lit] .hx-bright { opacity: 0.3; }
+.hx-ring[data-lit] .hx-hit { opacity: 0.55; }
+.hx-ring[data-current] .hx-line { opacity: 0; }
+.hx-ring[data-current] .hx-bright { opacity: 1; transition-delay: var(--d); }
+.hx-ring[data-current] .hx-halo { opacity: 0.2; transition-delay: var(--d); }
+.hx-ring[data-current] .hx-hit { opacity: 1; transition-delay: calc(var(--d) + 0.1s); }
+.hx-ring[data-current] .hx-flash { animation: hx-flash 0.9s ease-out var(--d) both; }
+.hx-ring[data-guard][data-current] .hx-hit { transition-delay: 2.1s; }
+@keyframes hx-flash { 0% { opacity: 0; } 25% { opacity: 0.55; } 100% { opacity: 0; } }
+
+.hx-name {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  padding: 3px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(18, 18, 18, 0.94);
+  font-family: var(--font-inter);
+  font-size: 13px;
+  font-weight: 500;
+  color: #5e5e5e;
+  white-space: nowrap;
+  transition: color 0.3s var(--ease), background-color 0.3s var(--ease), border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+.hx-name[data-lit] { color: color-mix(in srgb, var(--layer) 72%, #8c8c8c); border-color: color-mix(in srgb, var(--layer) 25%, transparent); }
+.hx-name[data-current] {
+  color: #fff;
+  background: color-mix(in srgb, var(--layer) 42%, #121212);
+  border-color: var(--layer);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--layer) 55%, transparent);
+}
+
+.hx-core { position: absolute; z-index: 2; transform: translate(-50%, -100%); }
+.hx-core .pixel-sprite { --px: 3px; display: block; margin-bottom: -3px; }
+
+/* Each catch: a trail draws from the core to the ring, the chip rides it out, the outcome pops. */
+.hx-trail, .hx-catch { --t0: 0s; }
+.hx-trail[data-first], .hx-catch[data-first] { --t0: 1.5s; }
+.hx-trail {
+  position: absolute;
+  z-index: 1;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to right, transparent, var(--c));
+  transform-origin: 0 50%;
+  transform: rotate(var(--a)) scaleX(0);
+  opacity: 0;
+  transition: transform 0.6s var(--ease), opacity 0.4s var(--ease);
+}
+.hx-trail[data-lit] { transform: rotate(var(--a)) scaleX(1); opacity: 0.25; transition-delay: var(--t0), 0s; }
+.hx-trail[data-current] { opacity: 1; }
+
+.hx-catch { position: absolute; z-index: 3; opacity: 0; }
+.hx-catch.is-left > .hx-chip { transform: translate(calc(-100% - 12px), -50%); }
+.hx-catch.is-right > .hx-chip { transform: translate(12px, -50%); }
+.hx-catch[data-lit] { animation: hx-out 0.6s var(--ease) var(--t0) both; }
+@keyframes hx-out {
+  from { translate: var(--fx) var(--fy); scale: 0.5; opacity: 0; }
+  20% { opacity: 1; }
+  to { translate: 0 0; scale: 1; opacity: 1; }
+}
+.hx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 11px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--c) 30%, rgba(255, 255, 255, 0.08));
+  background: rgba(24, 24, 26, 0.97);
+  box-shadow: 0 16px 36px -16px rgba(0, 0, 0, 0.95);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-paper);
+  white-space: nowrap;
+  transition: opacity 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.hx-catch[data-lit]:not([data-current]) .hx-chip { opacity: 0.42; }
+.hx-catch[data-current] .hx-chip { border-color: var(--c); box-shadow: 0 16px 40px -16px #000, 0 0 30px -8px var(--c); }
+.hx-chip-icon { display: inline-flex; color: var(--color-pewter); }
+.hx-outcome {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: var(--font-inter);
+  font-size: 13.5px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1), opacity 0.2s ease-out;
+}
+.hx-catch[data-lit] .hx-outcome { opacity: 1; transform: none; transition-delay: calc(var(--t0) + 0.55s); }
+
+/* The issue: waiting outside the rings, then in to the core along its trail, marked as it crosses the guard. */
+.hx-issue { position: absolute; z-index: 4; transform: translate(-50%, -50%); }
+.hx-issue-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(26, 26, 28, 0.97);
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.95);
+  white-space: nowrap;
+}
+.hx-issue-head { display: flex; align-items: center; gap: 8px; font-family: var(--font-inter); font-size: 15px; font-weight: 600; color: var(--color-paper); }
+.hx-issue-head svg { color: var(--color-pewter); }
+.hx-issue-mark { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fbbf24; background: rgba(251, 191, 36, 0.14); opacity: 0; transform: scale(0.6); }
+.hx-issue-body { font-family: var(--font-mono); font-size: 13px; color: #a3a3a3; }
+.hx-issue[data-arrived] { animation: hx-in 1.7s cubic-bezier(0.65, 0, 0.35, 1) both; }
+.hx-issue[data-arrived] .hx-issue-mark { animation: hx-mark 1.7s linear both; }
+@keyframes hx-in {
+  0% { translate: 0 0; scale: 1; opacity: 1; }
+  40% { translate: var(--cx) var(--cy); scale: 1; }
+  58% { translate: var(--cx) var(--cy); scale: 1; }
+  92% { translate: var(--kx) var(--ky); scale: 0.45; opacity: 1; }
+  100% { translate: var(--kx) var(--ky); scale: 0.3; opacity: 0; }
+}
+@keyframes hx-mark { 0%, 40% { opacity: 0; transform: scale(0.6); } 46% { opacity: 1; transform: scale(1.15); } 52%, 100% { opacity: 1; transform: none; } }
+.hx-issue-trail {
+  position: absolute;
+  z-index: 1;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to right, transparent, #fbbf24 50%, #d04f9a);
+  transform-origin: 0 50%;
+  transform: rotate(var(--a)) scaleX(0);
+  opacity: 0;
+}
+.hx-issue-trail[data-arrived] { animation: hx-issue-trail 1.7s cubic-bezier(0.65, 0, 0.35, 1) both; }
+@keyframes hx-issue-trail {
+  0% { transform: rotate(var(--a)) scaleX(0); opacity: 0.9; }
+  40%, 58% { transform: rotate(var(--a)) scaleX(var(--cross)); opacity: 0.9; }
+  92% { transform: rotate(var(--a)) scaleX(1); opacity: 0.9; }
+  100% { transform: rotate(var(--a)) scaleX(1); opacity: 0.3; }
+}
+
+/* The steps: the five layers in this run's order, the current one filled; each scrolls to its layer. */
+.hx-steps ol { display: flex; flex-wrap: wrap; gap: 6px; }
+.hx-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--color-ash);
+  font-family: var(--font-inter);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #6f6f6f;
+  cursor: pointer;
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.hx-step-dot { width: 7px; height: 7px; border-radius: 50%; background: #3a3a3a; transition: background-color 0.3s var(--ease); }
+.hx-step:hover { color: var(--color-paper); border-color: var(--color-slate); }
+.hx-step[data-lit] { color: color-mix(in srgb, var(--layer) 70%, #b0b0b0); }
+.hx-step[data-lit] .hx-step-dot { background: var(--layer); }
+.hx-step[aria-current] { color: #fff; border-color: var(--layer); background: color-mix(in srgb, var(--layer) 22%, transparent); }
+.hx-step:focus-visible { outline: 2px solid var(--layer); outline-offset: 2px; }
+.hx-hint { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-family: var(--font-inter); font-size: 12.5px; color: var(--color-pewter); transition: opacity 0.4s var(--ease); }
+.hx-hint[data-hidden] { opacity: 0; }
+
+/* ---- 3: the stores' own marks beside their names ---- */
+.mem-stores { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 4px 0 12px; }
+.mem-store { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-inter); font-size: 13.5px; font-weight: 500; color: var(--color-paper); }
+.mem-callout.is-left .mem-stores { justify-content: flex-end; }
+
+/* ---- 3: long memory inside one thread ---- */
+.longmem { margin-top: clamp(72px, 9vw, 120px); display: grid; gap: 28px; }
+.longmem-text { max-width: 34em; }
+.longmem-ui { padding-block: 32px; }
+/* The thread sits on its own backdrop (public/scheduled-bg.webp), lifted off it by a shadow. */
+.longmem-ui { background: url(/scheduled-bg.webp) center / cover no-repeat, #0c0c0d; }
+.longmem-ui .lmx { box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.04); }
+@media (min-width: 1024px) {
+  .longmem { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+}
+/* "212 messages later": a dashed break in the thread, not part of the app's own UI. */
+.lm-gap { display: flex; align-items: center; gap: 10px; margin: 2px 0; font-family: var(--font-inter); font-size: 11px; color: hsl(0 0% 45%); }
+.lm-gap::before, .lm-gap::after { content: ""; flex: 1; border-top: 1px dashed hsl(0 0% 22%); }
+
+/* The thread's story (long-memory.tsx). The finished thread is the resting state: the decision faded
+   with its line lit, the recall done, the answer in full. With data-anim="ready" every beat waits at
+   its first frame; data-anim="play" runs them, each after its own --d. Only opacity, colour and
+   transform change, so nothing shifts. */
+.lmx-decision { color: hsl(0 0% 93% / 0.55); }
+.lmx-line { border-radius: 4px; padding: 0 2px; margin: 0 -2px; color: var(--color-paper); background: rgba(85, 96, 212, 0.32); box-shadow: 0 0 0 1px rgba(124, 135, 240, 0.45); }
+.lmx-match { border-radius: 3px; padding: 0 1px; color: #fff; background: rgba(85, 96, 212, 0.45); }
+.lmx-quote { color: var(--color-paper); }
+.lmx-swap { display: inline-grid; }
+.lmx-swap > * { grid-area: 1 / 1; display: inline-flex; align-items: center; gap: 6px; }
+.lmx-running { visibility: hidden; }
+.lmx-spin { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; border-right-color: transparent; animation: lmx-spin 0.8s linear infinite; }
+
+.lmx[data-anim] .lmx-pop { transform-origin: 100% 100%; animation: lmx-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) var(--d, 0ms) both; }
+.lmx[data-anim] .lmx-fade { animation: lmx-fade 0.4s var(--ease) var(--d, 0ms) both; }
+.lmx[data-anim] .lmx-rise { animation: lmx-rise 0.5s var(--ease) var(--d, 0ms) both; }
+.lmx[data-anim] .lmx-word { animation: lmx-word 0.35s var(--ease) var(--d, 0ms) both; }
+/* The decision arrives bright, then ages as the messages pile up; its line lights when recall finds it. */
+.lmx[data-anim] .lmx-decision { transform-origin: 100% 100%; animation: lmx-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0ms both, lmx-age 0.9s var(--ease) 1100ms both; }
+.lmx[data-anim] .lmx-line { animation: lmx-light 0.6s var(--ease) 4300ms both; }
+.lmx[data-anim] .lmx-match { animation: lmx-light 0.5s var(--ease) var(--d, 0ms) both; }
+/* "recall running" with its spinner, then "recall completed" in the same place. */
+.lmx[data-anim] .lmx-running { visibility: visible; animation: lmx-out 0.25s var(--ease) var(--d, 0ms) both; }
+.lmx[data-anim] .lmx-done { animation: lmx-fade 0.3s var(--ease) var(--d, 0ms) both; }
+/* Ready: every beat waits on its first frame. Play: they run, each after its own delay. */
+.lmx[data-anim="ready"] .lmx-pop, .lmx[data-anim="ready"] .lmx-fade, .lmx[data-anim="ready"] .lmx-rise,
+.lmx[data-anim="ready"] .lmx-word, .lmx[data-anim="ready"] .lmx-match, .lmx[data-anim="ready"] .lmx-decision,
+.lmx[data-anim="ready"] .lmx-line, .lmx[data-anim="ready"] .lmx-running, .lmx[data-anim="ready"] .lmx-done { animation-play-state: paused; }
+
+@keyframes lmx-pop { 0% { opacity: 0; transform: translateY(12px) scale(0.85); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@keyframes lmx-fade { from { opacity: 0; } }
+@keyframes lmx-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes lmx-word { from { opacity: 0; filter: blur(3px); } }
+@keyframes lmx-age { from { color: hsl(0 0% 93%); } }
+@keyframes lmx-light { from { background: transparent; box-shadow: 0 0 0 1px transparent; color: inherit; } }
+@keyframes lmx-out { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+@keyframes lmx-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .lmx-spin { animation: none; }
+}

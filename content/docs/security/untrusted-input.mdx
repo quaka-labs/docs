@@ -1,0 +1,86 @@
+---
+title: Untrusted input
+description: What happens when the text steering a run is not yours, and why the answer is a copy plus a stricter approval gate.
+layer: untrusted-input
+---
+
+A model cannot tell the difference between your instruction and a sentence it read somewhere. It mixes everything in its context. If a GitHub issue says "refunds round wrong", and the same issue contains a line telling an AI agent to download a script, the model sees both as text with the same weight.
+
+Quaka cannot make the model distrust a sentence. It can remember that the run read one, and change what the run is allowed to do next.
+
+## The default
+
+Taint tracking is always on. There is no setting that turns it off. Two copy settings are on by default:
+
+- **Work in a copy after someone else's text** starts a run in a copy of the project when the run begins from an issue, a pull request, or a thread that read a web page.
+- **Work in a copy when a task links to a site** starts a run in a copy when your message contains a link to an outside site. The link alone does not taint the run. Reading the page does, as always.
+
+The copy is the containment. The taint is the reason the copy is used, and the reason the approval gate gets stricter inside it.
+
+## What counts as untrusted
+
+A run is tainted once content the user did not write enters its context:
+
+- web search results
+- a web page the run opened
+- an MCP tool's result
+- other people's text from GitHub or Linear
+- the output of a command that fetched from the network
+- a dependency's files
+
+Workspace files you own are trusted. So is a message from a chat bridge, because only allowlisted accounts reach a run; the bridge's text is treated as your instruction.
+
+## What changes when a run is tainted
+
+The taint is coarse and one-way. From the first untrusted source on, for the rest of the run:
+
+- A saved bash rule cannot approve a side effect.
+- An automation's grant cannot approve one.
+- The approval reviewer cannot approve one.
+- A bridge's "allow in this thread" cannot approve one.
+- A navigation to a web host the run has not opened yet asks, because a URL can carry data out.
+
+The read-only tools stay available. A tainted run can still read files, search, and answer. It cannot quietly change the machine.
+
+A subtask starts with its parent's taint, and the parent takes on whatever the subtask read when the result comes back. The thread keeps the taint too. The next run in a thread that was tainted starts tainted. It is never cleared, because the injected text is still in the thread's history. A new thread is the clean slate.
+
+## What you see
+
+The thread below started from an issue. The issue contains a command addressed to an agent. The run is working in a copy, so routine edits and commands stay in the copy. The planted command still gets a card, because it would leave the machine.
+
+<Figure backdrop="web" moment="Someone else's issue" caption="The run starts from a GitHub issue. The issue's hidden instruction reaches the model as text, and the run is marked before the first tool call.">
+  <IssueStartFragment />
+</Figure>
+
+The note above the card is the copy at work: edits and commands in the copy run without a card; pushes, pull requests and MCP calls wait for you. The card is the exception the copy cannot contain: a command that reaches the network and runs a downloaded script.
+
+## What the copy holds
+
+An undoable run works in a copy of the project: an APFS copy-on-write clone where the filesystem allows one, or a shared git clone otherwise. The copy contains the tracked files and the starting state, but not ignored folders such as `node_modules`; the run installs what it needs. It does not contain:
+
+- a push to a remote
+- a pull request
+- an MCP call that may change something outside the machine
+- a network connection that would carry data out
+
+Those wait for you at the end, next to the diff. You review the changes and the held actions, then apply the result to your checkout or discard it. On Linux, the copy also gets its own network namespace, so a dev server started inside it is not reachable from Quaka's browser; run the task in place if you need to preview it.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Work in a copy after someone else's text | On | Off makes those runs work in place and ask before each change once they read untrusted content. |
+| Work in a copy when a task links to a site | On | Off makes a run with an outside link work in place, and ask before each change after it reads the page. |
+| Sandboxed commands may use the network | On | Off removes the network from the copy's commands as well. |
+| Verify before done | Block | A run that read untrusted content asks once before verification runs, because checks execute the repository's code. |
+
+## Limits
+
+- **Taint is coarse.** It records that the run read something from outside, not what the text said or whether it was malicious. A harmless web page taints a run exactly like a hostile one.
+- **It does not scan content.** Quaka does not look for injection patterns, hidden instructions, or prompt text in a dependency. It tracks the source, not the sentence.
+- **Your own text is trusted.** A prompt injection pasted by you, or a malicious instruction in a file you wrote, is not marked. The model treats it as your instruction because it is in your workspace.
+- **A tainted run can still read.** Read-only tools remain available, including web search and browsing. Reading more untrusted content does not make the run safer; it makes the existing taint no worse, because it is already set.
+- **The taint cannot be cleared.** Editing the issue, deleting the message, or asking the model to forget does not clear the thread. Only a new thread starts clean, and deleting the thread deletes its taint record.
+- **The copy contains changes, not reads.** A command in the copy can still read anything the sandbox allows. The sandbox is what limits that, not the copy.
+- **Turning the copy settings off does not remove the taint.** It changes the containment. The run works in place and asks before each change. The approval gate stays strict.
+- **A person still decides.** The card can say that the run is tainted. It cannot tell you whether the command is safe. Read it.

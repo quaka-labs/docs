@@ -1,0 +1,90 @@
+---
+title: Replay
+description: Re-run merged pull requests on other models and compare pass rate, cost and steps.
+---
+
+Replay answers a different question from a thread. A thread asks whether a model can do a task now. Replay asks how several models do on work that has already been merged, where the tests say whether they succeeded.
+
+It takes merged pull requests from one repository, re-runs each from the commit before the fix, and grades the result with the tests the pull request added.
+
+## The default
+
+Replay needs an open project with a GitHub remote. From there:
+
+1. **New replay set.** Pick merged pull requests that added or changed tests.
+2. **Name it** and, if the project needs one, give it a setup command.
+3. **Add configs.** Each config is a model, an effort and an optional prompt.
+4. **Start a batch.** The default is three attempts per task and config, and 45 minutes per attempt.
+
+The model is given the issue the pull request closes, never the pull request's own description. That keeps the fix out of the prompt. A pull request that closes no issue is added without a task until you write one.
+
+## The tasks
+
+Each task is one merged pull request, re-run from its base commit. Replay reads the tests the pull request added and uses them as the grader. A task is validated before it costs a model call:
+
+- **Target tests** must fail without the fix and pass with it.
+- **Guard tests** must keep passing, so a model cannot pass by breaking something else.
+
+Validation runs the tests only, with no model. A task that cannot be graded says why: an environment problem, a missing dependency, or tests that do not distinguish the fix. Validation is retried on the next batch.
+
+The task editor lets you write a task for a pull request with no issue. It warns when the issue text looks like it contains a diff, because that would leak the fix. It also marks a public repository: models may have seen those pull requests, their issues or the code after them in training, which inflates pass rates.
+
+## Configs
+
+A config is a provider, a model, an effort and an optional prompt. You can add several to compare them in one batch. CLI and ACP agents cannot be used, because Replay calls the model directly and needs its own loop.
+
+The effort choices are the model's default, low, medium, high, extra high and max. A config's prompt is added to every attempt for that config.
+
+## A batch
+
+Before you start, Replay estimates the number of attempts and their cost. The estimate uses each config's history when it has one. You set:
+
+- **Repeats per task and config.** 1 to 20. The default is 3, and the Settings value is used as the starting point.
+- **Budget cap.** A dollar amount. The cap stops new attempts that would cross it and halts a running attempt at its next model call.
+
+Attempts run one at a time, offline, in throwaway worktrees. One batch runs at a time. If the machine cannot run Replay, the launcher refuses and says why instead of starting.
+
+Each attempt ends with one outcome:
+
+| Outcome | What it means |
+| --- | --- |
+| Resolved | The target tests pass and the guard tests still pass. |
+| Failed | The target tests do not pass. |
+| Regressed | The target tests pass but a guard test or a repository check fails. |
+| No change | The run changed no files. |
+| Environment | The worktree or its setup could not be made. |
+| Error | The provider refused or errored. |
+| Cancelled | You stopped the batch, or its budget cap did. |
+| Interrupted | The app quit while the attempt ran. |
+| Running | The attempt is still going. |
+
+## The results
+
+The results table compares configs on:
+
+- **Pass rate**, with a 95% interval, so a small sample does not look more certain than it is.
+- **Cost** per attempt.
+- **Steps** per attempt.
+- **Time** per attempt.
+
+The interval is the honest part. Three attempts on twelve tasks is a signal, not a measurement. A difference inside the intervals is not a difference the batch can prove.
+
+Replay also writes a verdict for the set: whether one config is ahead, or the intervals overlap and the order could be chance.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Repeats per task | 3 | The starting number of attempts per task and config. 1 to 20. |
+| Minutes per attempt | 45 | How long one attempt may run before it is stopped and graded as it is. 5 to 240. |
+
+## Limits
+
+- **The tests are the grader.** A pull request with weak tests grades weakly. A test that passes for the wrong reason passes.
+- **Public repositories are contaminated.** A model may have seen the pull request, its issue or the merged code. The set warns you, and the pass rate can be too high.
+- **A written task is your writing.** Results on a task you wrote depend on how you wrote it. The set says which tasks those are.
+- **Flaky tests are noise.** A test that fails at random makes a config look worse than it is. The interval shows the uncertainty but cannot remove it.
+- **The environment is yours.** A missing dependency or a different operating system can make an attempt fail for reasons unrelated to the model.
+- **The cap cannot price an unknown model.** If Replay has no price for a config, the dollar cap cannot stop it. The step and time limits still apply.
+- **One batch, one machine.** Attempts run one at a time. A large set takes hours, and the machine must stay awake.
+- **Replay is not a benchmark of the product.** It measures a model on one repository's merged work. A different repository, or a different kind of task, can rank the models differently.

@@ -1,0 +1,111 @@
+---
+title: Workspace
+description: Files, diffs, terminals, the browser and the Run button, in one project.
+---
+
+A workspace is the folder a thread works in. Quaka shows the same project in four places: the file tree, the diff, the terminal and the browser. A thread can use all four, and the agent can use the ones its mode allows.
+
+## The default
+
+Open a project and the workspace shows:
+
+- The file tree, with the files the project does not ignore.
+- The thread, in the middle.
+- The diff panel when a run changes files.
+- A terminal when you open one.
+- The browser when the agent opens a page or you type a URL.
+- A Run button when the project has a run script or a service.
+
+The agent can read and search the project. It can edit a file and show you the change before it lands. It can run a command in the sandbox. It can open a page in the agent's browser. It cannot see the terminal's output unless it runs the command itself or reads the output you show it.
+
+## Files and diffs
+
+The file tree shows the project as the agent sees it, minus the paths the project ignores. Click a file to preview it. A preview is read-only; the diff is where a change is reviewed.
+
+A diff is per file. It shows the before and after text, with added and removed lines. You can edit the after side before you accept it. The edit is yours: the run's copy is updated, not the agent's claim.
+
+The diff panel also shows review findings, when a Review run produced them, next to the file they concern.
+
+## Terminal
+
+The terminal is a real shell in the workspace. It receives the same workspace variables as an agent command, including `QUAKA_PORT`. You can open more than one terminal and switch between them. The agent does not see what you type in a terminal unless you paste it into the thread.
+
+A terminal command is not an agent tool call. It runs with your access, outside the agent's sandbox and approval flow. Use it the way you would use any terminal.
+
+## Browser
+
+The browser panel is the agent's browser. The agent can open a page, read it, click, type and take a screenshot. You can type a URL yourself. **Expand** fills the window; **Open in window** moves the page to its own window, which is useful for a game or a page that needs a native frame rate.
+
+The browser is not your browser. It has its own session and does not share your signed-in tabs. If you want the agent to use your own browser, turn on **Use your own browser** in Settings. That connects through Quaka's extension and uses your signed-in sessions. It is off by default.
+
+The agent's browser traffic is not covered by the firewall's enforcement. The firewall sees hosts the agent asks Quaka to open; it does not inspect every request a page makes on its own. [Firewall limits](/docs/security/firewall#limits).
+
+## Run and services
+
+If the project has a `.quaka/environment.toml`, the Run button starts its `run` script and every `[[services]]` entry. Each starts in its own terminal, with the workspace variables. **Stop** stops the run and its services as process groups.
+
+```toml
+[scripts]
+setup = "pnpm install"
+run = "pnpm dev --port $QUAKA_PORT"
+archive = "docker compose down"
+run_mode = "concurrent"
+
+[scripts.windows]
+run = "pnpm dev --port $env:QUAKA_PORT"
+
+[[services]]
+name = "db"
+command = "docker compose up db"
+port = 5432
+ready_timeout = 300
+```
+
+| Key | What it does |
+| --- | --- |
+| `scripts.setup` | Runs in a new worktree before the agent starts. Its output streams into the thread. Until it succeeds once in that worktree, no run starts there. |
+| `scripts.run` | Runs when you press Run, or when the agent runs the workspace. |
+| `scripts.archive` | Runs before a worktree is applied or discarded, so containers and servers stop first. |
+| `scripts.run_mode` | `concurrent` lets each worktree run its own copy. `nonconcurrent` stops the repository's other runs when one starts. |
+| `scripts.windows` | Per-key overrides on Windows, in PowerShell syntax. |
+| `services` | Extra processes started next to `run`, each in its own terminal. A service with a `port` gets a preview chip once it listens. |
+
+A `.conductor/settings.toml` with a `[scripts]` table is read as a fallback, so a project that already has one does not need a second file. The nearest file to the workspace wins.
+
+### Setup and archive are repository scripts
+
+`setup` and `archive` run without anyone pressing Run, and their text comes from the repository. Quaka runs them only after you approve that exact text for that repository. Editing either script asks again. The approval is stored in the app, not in the repository, so a cloned repository cannot approve its own scripts.
+
+## Ports and previews
+
+Every workspace gets a block of ten ports. `QUAKA_PORT` is the first one. Agent commands, the terminal and the run script all receive it. Start a dev server on `$QUAKA_PORT` rather than a fixed port, and two worktrees can run at once without colliding.
+
+When a dev server prints a local URL, Quaka finds it and shows a preview chip. Clicking the chip opens the URL in the agent's browser. The agent can screenshot and inspect the page there.
+
+On Linux, a command in a copy runs in its own network namespace. Its dev server is reachable from inside that namespace, but not from Quaka's browser. To preview a copy's dev server, run the task in place.
+
+## Git and pull requests
+
+The git panel shows the branch, the status, recent commits and the remotes. From it you can create a branch, commit, pull and push. **Review My Changes** starts a Review run on the current diff. **Review a pull request** opens the PR's branch and starts a review.
+
+A thread can own a pull request. When it does, the header shows the PR number and the checks. The agent can create a pull request with the `create_pull_request` tool. By default, that call asks, and so does a push. An automation can pre-approve tools its grant lists, never a force-push.
+
+GitHub watching, CI fixes and `@quaka` comments are documented in [Automations](/docs/automations).
+
+## Reviewing changes
+
+<Figure backdrop="desktop" moment="Reading the change" caption="A thread's changed files, the diff it produced and the workspace's Run control. The diff is where a person reads the change; the Run control belongs to the project, not to the run.">
+  <WorkspaceFragment />
+</Figure>
+
+The figure is the moment after a run has changed two files: the file tree marks them, the diff shows the one-line change, and the Run control is still the workspace's. It is not an apply card; the run worked in the checkout.
+
+## Limits
+
+- **The file tree is not a full filesystem view.** It hides ignored paths. A file the agent can read may not be in the tree.
+- **A diff shows text, not behavior.** A one-line change can alter a program in ways the diff does not show. The checks are the other half.
+- **The terminal is outside the sandbox.** A command you type there has your access. The agent's approvals do not apply to it.
+- **The browser is not fully covered by the firewall.** The firewall gates the hosts the agent asks for. A page can load resources from hosts the agent never named.
+- **Setup scripts are code from the repository.** Approving one means you read it. A setup script runs in every new worktree from then on, until its text changes.
+- **Ports are reserved, not guaranteed.** Another program can already be listening on a port in the block. The preview chip only appears when the port actually listens.
+- **A worktree is not a separate repository.** It shares objects and remotes. A commit or push from it affects the same repository.

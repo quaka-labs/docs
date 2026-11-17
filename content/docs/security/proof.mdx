@@ -1,0 +1,65 @@
+---
+title: Proof
+description: What a run has to show before it can call itself done, and why a green check is not the same as a tested change.
+layer: proof
+---
+
+An agent can say it fixed the bug. It can say the tests pass. The useful question is not what it says. It is what the repository can show.
+
+Proof is the layer that answers with the repository's own checks, the tests the run added or changed, and a comparison between the files the model claims it changed and the files it actually changed.
+
+## The default
+
+Verification is set to **Block**. When a Build or Debug run that changed files is about to finish, Quaka runs the repository's checks. If a check fails, the failure goes back to the agent to fix, up to two more attempts. A run whose checks still fail ends as not verified. It is never presented as done.
+
+Read-only runs are not verified. A run that changed nothing has nothing to prove.
+
+## What runs
+
+Three things happen, in order.
+
+1. **The repository's checks.** If the project has a trusted `.quaka/checks` file, those commands run. Otherwise Quaka detects fast checks from the project's manifests: a Cargo check for a Rust project, typecheck, lint or build for a JavaScript project, and `npm test` when there is neither a typecheck nor a lint. A project can turn detection off or list its own commands.
+2. **Fail-to-pass tests.** Every test the run added or changed must fail on the code from before the run and pass on the code after it. The before code is checked out separately, so the test is not run against a tree the run already changed. The test runs in a copy of the repository, never in your checkout.
+3. **Claimed versus actual.** The files the model's summary says it changed are compared with the diff. A summary that claims a file it did not touch, or misses a file it did, is called out.
+
+The result is one report with four possible outcomes.
+
+| Outcome | What it means |
+| --- | --- |
+| Tested | The checks pass, and every new or changed test fails without the change and passes with it. |
+| Checks pass | The checks pass, but no test proves the change: none was added, the proof was inconclusive, or a test passes without the change. |
+| Not verified | A check failed, a new or changed test failed with the change, or strict mode found a test that passes without it. |
+| Unverified | Nothing could be verified: no checks and no tests, or you declined to run them. |
+
+The distinction between Tested and Checks pass is the point. A project can have a green test suite and no test that would catch the bug the run was asked to fix. Proof asks for the second thing.
+
+## What you see
+
+The card below is a tested run: a test that fails on the old rounding and passes on the new one, checks that passed, and a second opinion when one is configured.
+
+<Figure backdrop="desktop" moment="Tested" caption="The proof card names the test, the check, and the reviewer. The claim is tied to a test that would fail without the change.">
+  <ProvenFragment />
+</Figure>
+
+The report is attached to the run, not buried in a log. A failed check shows its output. A test that could not be proven says why. A run that was not verified says so in the thread and in the inbox.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Verify before done | Block | Off runs no checks. Report runs them and shows the result without sending failures back. Block sends failures back to the agent before the run can finish. |
+| New tests must fail without the change | Off | On makes a test that passes either way a failure, not a warning. |
+| More attempts after a failure | 2 | In Block, how many more times the agent may try to fix a failing check. |
+| Time limit for the test check | 600 seconds | The fail-to-pass check stops after this long. |
+| Second opinion | Off | A separate reviewer model reads the result when enabled. It is a second opinion, not the proof. |
+
+## Limits
+
+- **Only Build and Debug runs that changed files are verified.** Ask, Plan and Review are read-only by design. A run that changed nothing has nothing to prove.
+- **The checks are the repository's.** If a project has no checks, or its checks are weak, Proof can only report what it ran. A passing check is not a correctness proof for the product.
+- **The tests are code too.** A test can be wrong, flaky, or pass for the wrong reason. Fail-to-pass reduces that risk by running the test against the code from before the change, but it does not eliminate it.
+- **Weakened tests are not proof.** Removing a test, skipping one, or taking out assertions is recorded and is never treated as proof. Adding a focus marker such as `.only` is always blocking.
+- **The claim comparison is text.** It compares the files named in the summary with the diff. It does not understand whether the summary describes the change well.
+- **The time limit is real.** A slow suite can hit the 600 second limit and leave the run unverified. That is a limit, not a failure of the change.
+- **Checks execute repository code.** That is why a run that read untrusted content asks once before verification starts. The copy contains the execution, but the code still runs.
+- **A second opinion is not a guarantee.** It is another model reading the same evidence. It can be wrong in the same ways, and it is off by default.

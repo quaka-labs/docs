@@ -1,0 +1,121 @@
+---
+title: Help
+description: What to check when a run, a command, a preview or a connection does not do what you expected, and how to reach support.
+---
+
+Most problems show up in the thread before they show up anywhere else. The status line says what the run is doing, the proof card says what it could show, and the inbox holds anything that is waiting for you.
+
+This page starts with the checks that solve most cases. If none of them do, the last section says what to send to support.
+
+## Start with the thread
+
+Open the thread and read the last few lines.
+
+- **A card in the composer** is an approval that is waiting. The run is paused until you approve or reject it.
+- **A proof line under the reply** says whether the run's checks passed. **Not verified** means a check or a new test failed. **Unverified** means nothing could be verified: no checks and no tests, or you declined to run them.
+- **The status line** names the current step: reading, running a command, waiting for a provider, or waiting for you.
+- **The inbox** groups threads that need you, so a paused run is not lost in the sidebar.
+
+If the app itself is not responding, quit it and open it again. Threads and settings are stored locally and survive a restart.
+
+## The model
+
+**The model menu says Choose a model.** No provider is set up yet. Open Settings, Providers and secrets, add a key or connect a local model, then pick a model in the message box.
+
+**The model list is empty.** The provider did not return models. Press refresh in the provider's row. For a custom provider, give it a base URL and a model list.
+
+**A run stops with a provider error.** The key may be wrong, the account may be out of credit or rate limited, or the provider may be down. The error text names which. Check the provider's own dashboard, then send the message again.
+
+**Claude Code or Codex is not found.** Settings, Claude Code and Codex shows **Not installed** when the command is not on the app's path. Install the CLI and sign in with it in a terminal first. Quaka uses that login and needs no API key.
+
+**An ACP agent does not start.** Its launch command, arguments or environment are wrong, or the sandbox is not available on this machine. The thread says which. An ACP agent that is set to run without the sandbox runs its own tools with your full access; that is a choice, not a fix.
+
+## Approvals
+
+**A run is waiting and nothing is happening.** Scroll to the approval card in the composer. Approve or reject it. A desktop card waits five minutes, then the call counts as denied, so answer it before the wait runs out.
+
+**A command asks every time.** Smart approval lets a read-only command, an edit inside the project, or a contained command run without a card. A command that leaves the project, names a secret, writes to `.quaka/` or `.git/`, pushes, or calls an MCP tool asks. Use **Always allow** on the card to save a rule for the command family, such as `npm run *`, or for the exact command.
+
+**A destructive command will not approve.** The card requires the word `delete` to be typed. That is deliberate. Read the command before you type it.
+
+**A run asks for everything.** The run may have read untrusted text, such as a web page, an issue or a pull request. A tainted run asks before anything that leaves its copy, and the taint lasts for the run and the thread. Start a new thread if the work no longer needs that context.
+
+## The firewall
+
+**A command cannot reach a host.** The firewall is in **Ask** or **Allowlist**. Ask holds a host for the rest of the run after you decide. Allowlist refuses every host that is not on the run's allowlist. The card names the host and the run. The desktop app does not currently show a mode control, so the stored value applies; Settings, Harness, Safety shows whether the firewall can be enforced here.
+
+**A run cannot ask and was refused.** A remote or unattended run has nobody to ask, so it refuses an unknown host instead of waiting. Run the task on the desktop, where the card can ask.
+
+**A connection was not recorded.** The command may not be sandboxed, or it may ignore the proxy variables. Observe records what goes through the proxy, not every socket on the machine. Settings, Harness, Safety says whether the firewall can be enforced here.
+
+## The sandbox
+
+**The thread says commands run unsandboxed.** The app found no OS sandbox on this machine, and the line says why. On Linux, bubblewrap must be installed and allowed to create user namespaces. On Windows, the sandbox needs Windows 11 24H2 or 25H2 at a supported build. On macOS, the built-in sandbox needs no install.
+
+**A command fails only inside the sandbox.** The sandbox confines writes to the project and gives the command a temporary home. A tool that writes outside the project, reads a file outside it, or needs a system service can fail. The approval card shows the command; approving does not lift the sandbox. Turn the sandbox off only if you accept that the command runs with your access.
+
+**The network is gone inside a command.** **Sandboxed commands may use the network** is off, or air-gapped mode is on. Both are in Settings, Harness, Safety. Air-gapped mode also limits models to local ones.
+
+## The workspace
+
+**A preview does not open.** The chip appears only when a port is listening. Start the server on `QUAKA_PORT` so it uses the workspace's reserved block. On Linux, a copy runs in its own network namespace, and Quaka's browser cannot reach its dev server; run the task in place to preview it.
+
+**A file is missing from the tree.** The project's ignore rules hide it, the same rules the agent sees. The file is still on disk.
+
+**The terminal does not have the project's variables.** Open a new terminal in the workspace. An old terminal keeps the environment it started with.
+
+**Run does nothing.** The project has no run script. Add `scripts.run` to `.quaka/environment.toml`. A setup or archive script needs approval of its exact text before it runs.
+
+## GitHub, Linear and automations
+
+**Pull requests are not watched.** Sign in to GitHub in Settings, then turn on **Watch pull requests**. A private repository also needs access for the signed-in account.
+
+**An automation with a GitHub trigger does not fire.** It needs a GitHub sign-in, pull request watching on, and air-gapped mode off. The automation's row says which one is missing.
+
+**An automation with a schedule does not fire.** Quaka must be running. Turn on **Start Quaka at login** to let it run in the tray. A sleeping or powered-off machine misses the fire. A cap, a previous run still going, or a skipped fire also stops it, and the run history says which.
+
+**Linear issues do not arrive.** Linear needs a personal API key and a filter. Quaka asks Linear about once a minute, and only while the app runs.
+
+## Replay
+
+**Replay refuses to start.** It needs an open project with a GitHub remote, and it runs one batch at a time. A config that uses Claude Code, Codex or an ACP agent is refused, because those run their own loop outside the sandbox and the grant.
+
+**A task cannot be validated.** The tests do not distinguish the fix, a dependency is missing, or the environment differs from the one the pull request ran in. The task says which. Validation is retried on the next batch.
+
+**A batch is slow.** Attempts run one at a time and the machine must stay awake. A large set takes hours. The budget cap stops new attempts; it does not speed them up.
+
+## Sync and the team bot
+
+**Sync does not connect.** Check the relay address and your sign-in. A self-hosted relay also needs its invite or pairing code. A recovery code is shown once; without it, losing every device loses what synced.
+
+**A project's notes or rules are missing on another device.** Each device maps a synced project to a folder. Check the mapping in Settings, Sync, Projects. Paths themselves do not sync.
+
+**The hosted team bot does not answer.** The runner may be offline or waiting for access, or the app may not be added to the team. An admin adds apps and people. In a channel, mention the bot or reply to it; a direct message works too. Messages wait while the runner is offline.
+
+**Your own bot does not answer.** It runs only while Quaka is running and connected. Check the token and the connection in Settings, Integrations.
+
+## Updates
+
+Open Settings, About to see the version and check for updates. The app also checks by itself every few hours. An update replaces the app; threads, settings and keys stay. If a check or an install fails, the row shows the error; check the network and try again.
+
+## Writing to support
+
+Support is email only, at [hello@quaka.app](mailto:hello@quaka.app).
+
+Include:
+
+- The app version from Settings, About.
+- Your operating system and its version.
+- What you asked for, and the exact text of any error.
+- What you expected and what happened instead.
+- Whether the run was in a copy, and whether it had read a web page, an issue or a pull request.
+- A screenshot of the thread if it shows the problem.
+
+Do not send API keys, project secrets, or private code. A screenshot of a key or a secret should be cropped or retaken.
+
+## Limits
+
+- **This page is a guide, not a diagnostic.** It lists the common causes. A specific failure can have a cause that is not here.
+- **Support is email, and it is not a live channel.** There is no chat, phone or ticket portal. A reply takes as long as it takes.
+- **The app cannot see another app's problem.** A provider outage, a corporate proxy, a VPN or an operating system policy can block Quaka in ways its own logs do not explain.
+- **A fix can change behavior.** Turning off the sandbox, the firewall or the taint makes a run behave differently. Do it because you accept the trade, not to make an error disappear.

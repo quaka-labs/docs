@@ -1,0 +1,96 @@
+---
+title: Team bot
+description: One hosted bot for a team, the apps it joins, and the bot you can run yourself.
+---
+
+The team bot lets a team talk to Quaka where it already works: Discord, Slack, Telegram or GitHub. One bot, `quaka-ai`, serves the whole team. A teammate mentions it, and the work starts on the team's runner.
+
+There are two ways to run it. Quaka's hosted bot answers even when your Mac is off. Your own bot uses your own app and token, and answers only while Quaka is running.
+
+## The hosted bot
+
+The hosted bot is in preview. Quaka turns hosting on for each team during the preview, so a new team can wait for access. While it waits, messages are held rather than lost.
+
+To start:
+
+1. Open Settings, Integrations.
+2. **Sign in with GitHub.** This only says who you are: Quaka reads your GitHub user ID and name and keeps no GitHub token.
+3. Create a team, or pick one you already belong to.
+4. Add the bot to the team's apps. An admin does this; a member can use the bot but cannot add apps or people.
+
+Messages to the bot pass through Quaka on their way to your team's runner. The runner is what does the work: it holds the thread, the sandbox, the approvals and the transcript. A runner can be online, offline, waiting for access or suspended. When it is offline, messages wait until it reconnects, and the settings show when it was last seen and how many messages are queued.
+
+## The apps
+
+| App | How it is added | How a teammate talks to it |
+| --- | --- | --- |
+| Discord | Opens Discord to pick a server you manage. | Mention the bot, reply to it, or send it a direct message. |
+| Slack | Opens Slack to approve Quaka for a workspace. | Mention `@Quaka` in a channel, or message it directly. |
+| Telegram | Add the bot to a group, then a group admin sends a one-time code there. | The code works once, for 10 minutes. After that, talk to it in the group. |
+| GitHub | Installs Quaka's GitHub App on the repositories you pick. | Pull requests and commits come from `quaka-ai[bot]`. |
+
+A team can have more than one install of an app, such as two Slack workspaces. The settings list each one.
+
+## Teammates
+
+A teammate is a person on the team, with one or more accounts linked to them. An admin adds a teammate by the ID their app shows and the name the team knows them by. Adding the same name again links another app to that person.
+
+Each platform shows the ID differently:
+
+- **Discord:** turn on Developer Mode, then right-click the person and copy their user ID.
+- **Slack:** open the person's profile, choose More, then copy the member ID.
+- **Telegram:** the desktop app shows peer IDs once that experimental setting is on, or the person sends `link` to the bot and an admin approves the code.
+- **GitHub:** the username. Quaka keeps the account's number, so a later rename changes nothing.
+
+A teammate can link another account themselves with `link github`, `link discord`, `link slack` or `link code`. `unlink <platform>` removes one. An admin approves a join code with `!approve <code> <name>`, adds an account directly with `!add <platform> <id> <name>`, and can make another teammate an admin.
+
+If a person is in several teams, `!team <name>` chooses where their direct messages go.
+
+## Talking to it
+
+A message that mentions the bot, replies to it or arrives in a direct message starts a thread. In Slack, the first message can set the thread up:
+
+```text
+@Quaka project=storefront model=<model-id> mode=build fix the rounding test
+```
+
+`project=`, `model=` and `mode=` are optional. `project=` is not available where the team's admins set each channel's project. Inside a thread:
+
+| Command | What it does |
+| --- | --- |
+| `!new` | Starts a new thread. |
+| `!stop` | Stops the current run. |
+| `!mode <mode>` | Changes the thread's mode. |
+| `!workspace <path>` | Moves the thread to another workspace. |
+| `!status` | Shows what the thread is doing. |
+| `mute` / `unmute` | In Slack, stops or resumes replies in the thread. |
+| `archive` / `unarchive` | In Slack, archives the thread or brings it back. |
+| `!run <automation>` | Starts one of your automations; its thread opens in the Quaka inbox. |
+| `aside` | In Slack, begins a message the agent should not see. |
+
+Slack and Discord write commands with `!`. Telegram writes them with `/`. Discord also exposes the same commands as slash commands.
+
+A message from an admitted teammate is treated as that teammate's instruction, not as a web page. What the run reads afterwards, such as a linked page, an issue or an MCP result, taints it, and the runner's taint and approval rules apply from there. A call that leaves the machine still asks.
+
+## Your own bot
+
+If you would rather not use the hosted bot, Settings, Integrations has **Use your own bot** for Discord, Telegram and Slack. You create the app, paste its token, and connect it from this Mac.
+
+Your own bot answers only while Quaka is running. It has no hosted runner, so a message waits until the app is open and connected. The setup for each app is the same one the chat bridges use.
+
+## Settings
+
+| Setting | Default | What changes |
+| --- | --- | --- |
+| Team bot address | Empty (Quaka's service) | The address the hosted bot is managed through. Empty uses the default. |
+| Use your own bot | Off | Switches one app to your own bot and token. |
+
+## Limits
+
+- **The hosted bot is in preview.** Hosting is turned on per team. A team that is waiting for access holds its messages, and a suspended team cannot use the bot.
+- **Messages pass through Quaka.** The hosted bot is not a direct connection from the chat app to your machine. Quaka's service routes the message to the team's runner.
+- **A runner can be offline.** Messages wait, but they do not run until it reconnects. A long outage can leave a queue.
+- **Chat is untrusted.** Anyone who can post where the bot reads can put text in front of the agent. The taint, the approvals and the sandbox are what limit the effect.
+- **An admin has the keys.** Admins add apps, add people and approve joins. A member cannot. Check who is an admin.
+- **Your own bot depends on your machine.** It answers only while Quaka runs, and only while its connection is up.
+- **GitHub access follows the install.** The GitHub App can see the repositories you picked and no others. A pull request or commit from the bot is a real one.

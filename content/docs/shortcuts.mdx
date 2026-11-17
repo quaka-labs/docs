@@ -1,0 +1,89 @@
+---
+title: Keyboard shortcuts
+description: Every global shortcut, the keys inside the composer, approval card and menus, and how the list is generated.
+---
+
+Quaka has a small set of global shortcuts and a few keys that belong to one control. The global set is generated from the app's keyboard handler. The rest is written by hand from the controls that own it.
+
+## The default
+
+Nothing needs to be turned on. The shortcuts work whenever the app has focus, and the keys that belong to a control work while that control has focus.
+
+`Cmd` is the modifier on macOS. `Ctrl` is the modifier on Windows and Linux. `Option` on macOS is `Alt` elsewhere. The tables spell the keys out rather than showing symbols.
+
+## Global shortcuts
+
+These work anywhere in the app.
+
+<ShortcutsReference />
+
+Two of them are worth a note:
+
+- **Run the workspace** starts the project's run script and services. It never reloads the window, which is why it takes `Cmd R` instead of the browser's reload.
+- **Go to the next thread that needs you** moves to the next thread that failed or has an unread result. It reads the physical `L` key, so it works on a layout where `Option L` types a different character.
+
+## In the message box
+
+| Key | What it does |
+| --- | --- |
+| Enter | Sends the message. |
+| Shift Enter | Starts a new line instead of sending. |
+| Arrow Up | When the box is empty and a message is queued, takes the last queued message back for editing. |
+| Cmd Enter | Does the other of steer and queue while a run is going. |
+| Option Enter | Interrupts the reply being written. A running tool finishes first. |
+| Hold Option Space | Dictation on macOS. |
+| Hold Ctrl Space | Dictation on Windows and Linux. |
+
+While a run is going, plain Enter either steers the message into the run at its next step or queues it until the turn ends. The choice is in Settings, Harness, Chat box. `Cmd Enter` does the other one. `Option Enter` is the interrupt: the reply stops, but a tool that is already running is allowed to finish.
+
+On Windows and Linux, dictation uses `Ctrl Space` because `Alt Space` opens the window menu. You can also click the microphone in the message box to start and stop.
+
+## In the approval card
+
+| Key | What it does |
+| --- | --- |
+| Enter | Approves, while focus is in the card and not on a button or the details control. |
+| Escape | Rejects. |
+| Shift Enter | A new line in a command you are editing before you approve it. |
+
+Enter on a focused button or on **Details** does that control's own action instead of approving. A destructive command still needs the word `delete` typed into the card, so Enter alone does not approve it.
+
+## In the command palette
+
+| Key | What it does |
+| --- | --- |
+| Arrow Down | Moves to the next result. |
+| Arrow Up | Moves to the previous result. |
+| Enter | Runs the selected command, or opens the selected thread or message. |
+| Escape | Closes the palette. |
+
+The palette searches commands, threads and messages in one list. It opens with `Cmd K` or `Ctrl K`.
+
+## In the model menu
+
+| Key | What it does |
+| --- | --- |
+| Arrow Down | Moves to the next model. |
+| Arrow Up | Moves to the previous model. |
+| Enter | Picks the selected model. |
+| Escape | Clears the search text first, then closes the menu on a second press. |
+
+## Where this comes from
+
+`content/generated/shortcuts.json` is committed so the docs build never needs the app. `scripts/docs/gen-shortcuts.mjs` reads the app's global keyboard handler and writes one row per shortcut, merging the two zoom-in keys into one row. The hand-written keys above come from the message box, the approval card, the command palette and the model menu.
+
+To regenerate, a maintainer runs this from an app checkout:
+
+```bash
+QUAKA_SOURCE=/path/to/app npm run docs:gen
+```
+
+The app is not open source. Regeneration is a maintainer step, not something a reader needs to do.
+
+## Limits
+
+- **The operating system comes first.** A shortcut the system or another app has claimed never reaches Quaka. Media keys, window managers and accessibility tools are common causes.
+- **A disabled control has no action.** A shortcut whose control is not available, such as the terminal in a view without one, does nothing when pressed.
+- **Letter shortcuts follow the layout.** Most letter shortcuts read the key's label, so a non-QWERTY layout sends a different letter. The next-thread shortcut reads the physical key instead.
+- **The list is a snapshot.** It is generated from one app version. A later version can add or change a shortcut before this page is regenerated.
+- **There are no custom bindings.** The app does not let you remap a shortcut. If a key conflicts with another app, close or reconfigure that app.
